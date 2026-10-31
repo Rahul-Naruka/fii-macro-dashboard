@@ -14,9 +14,30 @@
         "debt": 90,
         "strategy": "Maximum capital safety. Strict allocation to Sovereign G-Sec, Banking & PSU Debt, and Ultra Short Duration funds.",
         "funds": [
-          "SBI Banking and PSU Debt Fund",
-          "Bandhan All Seasons Bond Fund",
-          "HDFC Ultra Short Term Fund"
+          {
+            "name": "SBI Banking and PSU Debt Fund",
+            "category": "Banking & PSU Debt",
+            "allocation": 50,
+            "type": "Debt"
+          },
+          {
+            "name": "Bandhan All Seasons Bond Fund",
+            "category": "Dynamic Bond",
+            "allocation": 25,
+            "type": "Debt"
+          },
+          {
+            "name": "HDFC Ultra Short Term Fund",
+            "category": "Ultra Short Duration",
+            "allocation": 15,
+            "type": "Debt"
+          },
+          {
+            "name": "ICICI Prudential Nifty 50 Index Fund",
+            "category": "Large Cap Index (SIP)",
+            "allocation": 10,
+            "type": "Equity"
+          }
         ]
       },
       "moderate": {
@@ -24,9 +45,30 @@
         "debt": 70,
         "strategy": "Capital defence & tactical SIP. Park in Arbitrage & Corporate Bond funds; maintain disciplined equity SIPs.",
         "funds": [
-          "Kotak Equity Arbitrage Fund",
-          "HDFC Corporate Bond Fund",
-          "ICICI Prudential Balanced Advantage Fund"
+          {
+            "name": "Kotak Equity Arbitrage Fund",
+            "category": "Arbitrage (Tax Safe)",
+            "allocation": 35,
+            "type": "Debt"
+          },
+          {
+            "name": "HDFC Corporate Bond Fund",
+            "category": "Corporate Bond",
+            "allocation": 35,
+            "type": "Debt"
+          },
+          {
+            "name": "ICICI Prudential Balanced Advantage Fund",
+            "category": "Dynamic Asset Allocation",
+            "allocation": 15,
+            "type": "Equity"
+          },
+          {
+            "name": "Parag Parikh Flexi Cap Fund",
+            "category": "Flexi Cap (Staggered SIP)",
+            "allocation": 15,
+            "type": "Equity"
+          }
         ]
       },
       "aggressive": {
@@ -34,9 +76,30 @@
         "debt": 55,
         "strategy": "Defensive rebalancing. High quality Short Duration & Arbitrage funds (55%) with 6-month STP into Flexi Cap.",
         "funds": [
-          "Parag Parikh Flexi Cap Fund (via STP)",
-          "ICICI Prudential Short Term Fund",
-          "Tata Arbitrage Fund"
+          {
+            "name": "ICICI Prudential Short Term Fund",
+            "category": "Short Duration Debt (STP Source)",
+            "allocation": 35,
+            "type": "Debt"
+          },
+          {
+            "name": "Tata Arbitrage Fund",
+            "category": "Arbitrage",
+            "allocation": 20,
+            "type": "Debt"
+          },
+          {
+            "name": "Parag Parikh Flexi Cap Fund",
+            "category": "Flexi Cap (STP Inflow)",
+            "allocation": 25,
+            "type": "Equity"
+          },
+          {
+            "name": "Mirae Asset Large & Midcap Fund",
+            "category": "Large & Mid Cap (SIP)",
+            "allocation": 20,
+            "type": "Equity"
+          }
         ]
       },
       "very_aggressive": {
@@ -44,9 +107,30 @@
         "debt": 40,
         "strategy": "Staggered dip buying. Maintain existing Mid/Small Cap SIPs while building 40% debt 'dry powder' for corrections.",
         "funds": [
-          "Motilal Oswal Midcap Fund (SIP)",
-          "Nippon India Small Cap Fund (SIP)",
-          "HDFC Money Market Fund (STP Source)"
+          {
+            "name": "HDFC Money Market Fund",
+            "category": "Money Market (Dry Powder)",
+            "allocation": 40,
+            "type": "Debt"
+          },
+          {
+            "name": "Motilal Oswal Midcap Fund",
+            "category": "Mid Cap (SIP)",
+            "allocation": 25,
+            "type": "Equity"
+          },
+          {
+            "name": "Nippon India Small Cap Fund",
+            "category": "Small Cap (SIP)",
+            "allocation": 20,
+            "type": "Equity"
+          },
+          {
+            "name": "Parag Parikh Flexi Cap Fund",
+            "category": "Flexi Cap",
+            "allocation": 15,
+            "type": "Equity"
+          }
         ]
       }
     }
@@ -104,7 +188,7 @@
     "nifty_fwd_pe": 20.2,
     "nifty_eps_growth": 9.1,
     "us_cpi_yoy": 3.7,
-    "timestamp": "2026-10-31 18:33:41 UTC"
+    "timestamp": "2026-10-31 19:08:17 UTC"
   },
-  "last_updated": "2026-10-31 18:33:41 UTC"
+  "last_updated": "2026-10-31 19:08:17 UTC"
 }

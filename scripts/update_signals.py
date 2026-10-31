@@ -183,22 +183,43 @@ def calculate_signal(metrics):
             "conservative": {
                 "equity": 35, "debt": 65,
                 "strategy": "Capital preservation with growth kicker. Deploy in Conservative Hybrid & Arbitrage funds + Banking & PSU Debt.",
-                "funds": ["ICICI Prudential Regular Savings Fund", "HDFC Banking and PSU Debt Fund", "Kotak Equity Arbitrage Fund"]
+                "funds": [
+                    {"name": "HDFC Banking and PSU Debt Fund", "category": "Banking & PSU Debt", "allocation": 40, "type": "Debt"},
+                    {"name": "Kotak Equity Arbitrage Fund", "category": "Arbitrage", "allocation": 25, "type": "Debt"},
+                    {"name": "ICICI Prudential Regular Savings Fund", "category": "Conservative Hybrid", "allocation": 20, "type": "Equity"},
+                    {"name": "UTI Nifty 50 Index Fund", "category": "Large Cap Index", "allocation": 15, "type": "Equity"}
+                ]
             },
             "moderate": {
                 "equity": 65, "debt": 35,
                 "strategy": "Growth with controlled volatility. Overweight Balanced Advantage (BAF) & Multi-Asset Allocation funds.",
-                "funds": ["HDFC Balanced Advantage Fund", "ICICI Prudential Multi-Asset Fund", "Aditya Birla Sun Life Corporate Bond Fund"]
+                "funds": [
+                    {"name": "HDFC Balanced Advantage Fund", "category": "Dynamic Asset Allocation", "allocation": 35, "type": "Equity"},
+                    {"name": "Parag Parikh Flexi Cap Fund", "category": "Flexi Cap", "allocation": 30, "type": "Equity"},
+                    {"name": "ICICI Prudential Multi-Asset Fund", "category": "Multi Asset", "allocation": 20, "type": "Debt"},
+                    {"name": "Aditya Birla Sun Life Corporate Bond Fund", "category": "Corporate Bond", "allocation": 15, "type": "Debt"}
+                ]
             },
             "aggressive": {
                 "equity": 80, "debt": 20,
                 "strategy": "Aggressive wealth compounding. High exposure to Flexi Cap & Large & Mid Cap funds with 20% liquid reserve.",
-                "funds": ["Parag Parikh Flexi Cap Fund", "Mirae Asset Large & Midcap Fund", "HDFC Short Term Debt Fund"]
+                "funds": [
+                    {"name": "Parag Parikh Flexi Cap Fund", "category": "Flexi Cap", "allocation": 40, "type": "Equity"},
+                    {"name": "Mirae Asset Large & Midcap Fund", "category": "Large & Mid Cap", "allocation": 25, "type": "Equity"},
+                    {"name": "Motilal Oswal Midcap Fund", "category": "Mid Cap", "allocation": 15, "type": "Equity"},
+                    {"name": "HDFC Short Term Debt Fund", "category": "Short Duration Debt", "allocation": 20, "type": "Debt"}
+                ]
             },
             "very_aggressive": {
                 "equity": 95, "debt": 5,
                 "strategy": "Maximum alpha expansion. Overweight Mid Cap, Small Cap, and focused growth funds.",
-                "funds": ["Motilal Oswal Midcap Fund", "Nippon India Small Cap Fund", "Bandhan Sterling Value Fund"]
+                "funds": [
+                    {"name": "Motilal Oswal Midcap Fund", "category": "Mid Cap", "allocation": 35, "type": "Equity"},
+                    {"name": "Nippon India Small Cap Fund", "category": "Small Cap", "allocation": 30, "type": "Equity"},
+                    {"name": "Parag Parikh Flexi Cap Fund", "category": "Flexi Cap", "allocation": 20, "type": "Equity"},
+                    {"name": "Bandhan Sterling Value Fund", "category": "Value / Focused", "allocation": 10, "type": "Equity"},
+                    {"name": "ICICI Prudential Liquid Fund", "category": "Liquid / Cash Buffer", "allocation": 5, "type": "Debt"}
+                ]
             }
         }
         overall_equity = 75
@@ -213,22 +234,42 @@ def calculate_signal(metrics):
             "conservative": {
                 "equity": 10, "debt": 90,
                 "strategy": "Maximum capital safety. Strict allocation to Sovereign G-Sec, Banking & PSU Debt, and Ultra Short Duration funds.",
-                "funds": ["SBI Banking and PSU Debt Fund", "Bandhan All Seasons Bond Fund", "HDFC Ultra Short Term Fund"]
+                "funds": [
+                    {"name": "SBI Banking and PSU Debt Fund", "category": "Banking & PSU Debt", "allocation": 50, "type": "Debt"},
+                    {"name": "Bandhan All Seasons Bond Fund", "category": "Dynamic Bond", "allocation": 25, "type": "Debt"},
+                    {"name": "HDFC Ultra Short Term Fund", "category": "Ultra Short Duration", "allocation": 15, "type": "Debt"},
+                    {"name": "ICICI Prudential Nifty 50 Index Fund", "category": "Large Cap Index (SIP)", "allocation": 10, "type": "Equity"}
+                ]
             },
             "moderate": {
                 "equity": 30, "debt": 70,
                 "strategy": "Capital defence & tactical SIP. Park in Arbitrage & Corporate Bond funds; maintain disciplined equity SIPs.",
-                "funds": ["Kotak Equity Arbitrage Fund", "HDFC Corporate Bond Fund", "ICICI Prudential Balanced Advantage Fund"]
+                "funds": [
+                    {"name": "Kotak Equity Arbitrage Fund", "category": "Arbitrage (Tax Safe)", "allocation": 35, "type": "Debt"},
+                    {"name": "HDFC Corporate Bond Fund", "category": "Corporate Bond", "allocation": 35, "type": "Debt"},
+                    {"name": "ICICI Prudential Balanced Advantage Fund", "category": "Dynamic Asset Allocation", "allocation": 15, "type": "Equity"},
+                    {"name": "Parag Parikh Flexi Cap Fund", "category": "Flexi Cap (Staggered SIP)", "allocation": 15, "type": "Equity"}
+                ]
             },
             "aggressive": {
                 "equity": 45, "debt": 55,
                 "strategy": "Defensive rebalancing. High quality Short Duration & Arbitrage funds (55%) with 6-month STP into Flexi Cap.",
-                "funds": ["Parag Parikh Flexi Cap Fund (via STP)", "ICICI Prudential Short Term Fund", "Tata Arbitrage Fund"]
+                "funds": [
+                    {"name": "ICICI Prudential Short Term Fund", "category": "Short Duration Debt (STP Source)", "allocation": 35, "type": "Debt"},
+                    {"name": "Tata Arbitrage Fund", "category": "Arbitrage", "allocation": 20, "type": "Debt"},
+                    {"name": "Parag Parikh Flexi Cap Fund", "category": "Flexi Cap (STP Inflow)", "allocation": 25, "type": "Equity"},
+                    {"name": "Mirae Asset Large & Midcap Fund", "category": "Large & Mid Cap (SIP)", "allocation": 20, "type": "Equity"}
+                ]
             },
             "very_aggressive": {
                 "equity": 60, "debt": 40,
                 "strategy": "Staggered dip buying. Maintain existing Mid/Small Cap SIPs while building 40% debt 'dry powder' for corrections.",
-                "funds": ["Motilal Oswal Midcap Fund (SIP)", "Nippon India Small Cap Fund (SIP)", "HDFC Money Market Fund (STP Source)"]
+                "funds": [
+                    {"name": "HDFC Money Market Fund", "category": "Money Market (Dry Powder)", "allocation": 40, "type": "Debt"},
+                    {"name": "Motilal Oswal Midcap Fund", "category": "Mid Cap (SIP)", "allocation": 25, "type": "Equity"},
+                    {"name": "Nippon India Small Cap Fund", "category": "Small Cap (SIP)", "allocation": 20, "type": "Equity"},
+                    {"name": "Parag Parikh Flexi Cap Fund", "category": "Flexi Cap", "allocation": 15, "type": "Equity"}
+                ]
             }
         }
         overall_equity = 35
@@ -243,22 +284,43 @@ def calculate_signal(metrics):
             "conservative": {
                 "equity": 20, "debt": 80,
                 "strategy": "Income generation with minor equity kicker via Conservative Hybrid and High Quality Corporate Debt.",
-                "funds": ["Canara Robeco Conservative Hybrid Fund", "HDFC Corporate Bond Fund", "Aditya Birla Sun Life Savings Fund"]
+                "funds": [
+                    {"name": "HDFC Corporate Bond Fund", "category": "Corporate Bond", "allocation": 45, "type": "Debt"},
+                    {"name": "Canara Robeco Conservative Hybrid Fund", "category": "Conservative Hybrid", "allocation": 20, "type": "Debt"},
+                    {"name": "Aditya Birla Sun Life Savings Fund", "category": "Money Market", "allocation": 15, "type": "Debt"},
+                    {"name": "UTI Nifty 50 Index Fund", "category": "Large Cap Index", "allocation": 20, "type": "Equity"}
+                ]
             },
             "moderate": {
                 "equity": 50, "debt": 50,
                 "strategy": "Equalized hybrid allocation. Dynamic rebalancing via Balanced Advantage & Multi-Asset Allocation funds.",
-                "funds": ["HDFC Balanced Advantage Fund", "SBI Multi Asset Allocation Fund", "ICICI Prudential All Seasons Bond Fund"]
+                "funds": [
+                    {"name": "HDFC Balanced Advantage Fund", "category": "Dynamic Asset Allocation", "allocation": 25, "type": "Equity"},
+                    {"name": "SBI Multi Asset Allocation Fund", "category": "Multi Asset", "allocation": 25, "type": "Equity"},
+                    {"name": "ICICI Prudential All Seasons Bond Fund", "category": "Dynamic Bond", "allocation": 30, "type": "Debt"},
+                    {"name": "Kotak Equity Arbitrage Fund", "category": "Arbitrage", "allocation": 20, "type": "Debt"}
+                ]
             },
             "aggressive": {
                 "equity": 65, "debt": 35,
                 "strategy": "Selective growth posture. Core allocations in Large & Mid Cap funds with active STP from Short Term Debt.",
-                "funds": ["Mirae Asset Large & Midcap Fund", "Parag Parikh Flexi Cap Fund", "Kotak Short Term Fund"]
+                "funds": [
+                    {"name": "Parag Parikh Flexi Cap Fund", "category": "Flexi Cap", "allocation": 35, "type": "Equity"},
+                    {"name": "Mirae Asset Large & Midcap Fund", "category": "Large & Mid Cap", "allocation": 20, "type": "Equity"},
+                    {"name": "Motilal Oswal Midcap Fund", "category": "Mid Cap", "allocation": 10, "type": "Equity"},
+                    {"name": "Kotak Short Term Fund", "category": "Short Duration Debt", "allocation": 25, "type": "Debt"},
+                    {"name": "ICICI Prudential Liquid Fund", "category": "Liquid", "allocation": 10, "type": "Debt"}
+                ]
             },
             "very_aggressive": {
                 "equity": 80, "debt": 20,
                 "strategy": "Alpha bias. Continue heavy SIPs in Mid Cap & Flexi Cap funds with 20% parked in Liquid funds for market dips.",
-                "funds": ["Motilal Oswal Midcap Fund", "Quant Flexi Cap Fund", "ICICI Prudential Liquid Fund"]
+                "funds": [
+                    {"name": "Motilal Oswal Midcap Fund", "category": "Mid Cap", "allocation": 30, "type": "Equity"},
+                    {"name": "Nippon India Small Cap Fund", "category": "Small Cap", "allocation": 25, "type": "Equity"},
+                    {"name": "Quant Flexi Cap Fund", "category": "Flexi Cap", "allocation": 25, "type": "Equity"},
+                    {"name": "ICICI Prudential Liquid Fund", "category": "Liquid (Dip Buying)", "allocation": 20, "type": "Debt"}
+                ]
             }
         }
         overall_equity = 50

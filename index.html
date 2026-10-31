@@ -559,9 +559,29 @@ let currentSignalData = null;
       const fundList = document.getElementById('activeFundList');
       fundList.innerHTML = '';
       (prof.funds || []).forEach(f => {
+        const isObj = typeof f === 'object';
+        const name = isObj ? f.name : f;
+        const alloc = isObj ? f.allocation : null;
+        const type = isObj ? f.type : 'Equity';
+        const cat = isObj ? f.category : '';
+
         const li = document.createElement('li');
-        li.className = 'flex items-center gap-2';
-        li.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span>${f}</span>`;
+        li.className = 'p-2 rounded-lg bg-slate-900 border border-slate-800 flex items-center justify-between gap-2';
+
+        const typeBadgeCls = type === 'Equity' 
+          ? 'bg-blue-500/10 text-blue-400 border-blue-500/20' 
+          : 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20';
+
+        li.innerHTML = `
+          <div class="flex items-center gap-2 overflow-hidden">
+            <span class="w-2 h-2 rounded-full ${type === 'Equity' ? 'bg-blue-500' : 'bg-emerald-500'} flex-shrink-0"></span>
+            <div class="truncate">
+              <span class="font-medium text-white block truncate">${name}</span>
+              ${cat ? `<span class="text-[10px] text-slate-400">${cat}</span>` : ''}
+            </div>
+          </div>
+          ${alloc !== null ? `<span class="px-2 py-0.5 rounded text-xs font-bold border ${typeBadgeCls} flex-shrink-0">${alloc}%</span>` : ''}
+        `;
         fundList.appendChild(li);
       });
     }
