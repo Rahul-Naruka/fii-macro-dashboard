@@ -11,7 +11,8 @@
     "Nifty EPS Growth (%)": 0.238,
     "DII Net Flow (INR Cr)": 13780,
     "FII Investment Signal": "Favourable",
-    "Primary Regime & Catalyst": "Strong capex cycle, high GDP growth & robust corporate profits"
+    "Primary Regime & Catalyst": "Strong capex cycle, high GDP growth & robust corporate profits",
+    "US YoY CPI (%)": 3.4
   },
   {
     "Year": 2006,
@@ -25,7 +26,8 @@
     "Nifty EPS Growth (%)": 0.214,
     "DII Net Flow (INR Cr)": 18450,
     "FII Investment Signal": "Favourable",
-    "Primary Regime & Catalyst": "Weak USD tailwind; synchronized emerging market expansion"
+    "Primary Regime & Catalyst": "Weak USD tailwind; synchronized emerging market expansion",
+    "US YoY CPI (%)": 3.2
   },
   {
     "Year": 2007,
@@ -39,7 +41,8 @@
     "Nifty EPS Growth (%)": 0.165,
     "DII Net Flow (INR Cr)": 23900,
     "FII Investment Signal": "Favourable",
-    "Primary Regime & Catalyst": "Peak global liquidity; massive foreign risk-on rally before GFC"
+    "Primary Regime & Catalyst": "Peak global liquidity; massive foreign risk-on rally before GFC",
+    "US YoY CPI (%)": 2.8
   },
   {
     "Year": 2008,
@@ -53,7 +56,8 @@
     "Nifty EPS Growth (%)": -0.042,
     "DII Net Flow (INR Cr)": 47740,
     "FII Investment Signal": "Unfavourable",
-    "Primary Regime & Catalyst": "Global Financial Crisis; extreme flight to safety; Lehman collapse"
+    "Primary Regime & Catalyst": "Global Financial Crisis; extreme flight to safety; Lehman collapse",
+    "US YoY CPI (%)": 3.8
   },
   {
     "Year": 2009,
@@ -67,7 +71,8 @@
     "Nifty EPS Growth (%)": 0.085,
     "DII Net Flow (INR Cr)": 2420,
     "FII Investment Signal": "Favourable",
-    "Primary Regime & Catalyst": "Fed QE1 launch, zero-interest rate policy; rapid EM liquidity rebound"
+    "Primary Regime & Catalyst": "Fed QE1 launch, zero-interest rate policy; rapid EM liquidity rebound",
+    "US YoY CPI (%)": -0.4
   },
   {
     "Year": 2010,
@@ -81,7 +86,8 @@
     "Nifty EPS Growth (%)": 0.192,
     "DII Net Flow (INR Cr)": -28240,
     "FII Investment Signal": "Favourable",
-    "Primary Regime & Catalyst": "Fed QE2 injection; record institutional buying into Indian equities"
+    "Primary Regime & Catalyst": "Fed QE2 injection; record institutional buying into Indian equities",
+    "US YoY CPI (%)": 1.6
   },
   {
     "Year": 2011,
@@ -95,7 +101,8 @@
     "Nifty EPS Growth (%)": 0.08,
     "DII Net Flow (INR Cr)": 22480,
     "FII Investment Signal": "Unfavourable",
-    "Primary Regime & Catalyst": "Eurozone sovereign debt crisis; runaway domestic CPI inflation & high RBI rates"
+    "Primary Regime & Catalyst": "Eurozone sovereign debt crisis; runaway domestic CPI inflation & high RBI rates",
+    "US YoY CPI (%)": 3.2
   },
   {
     "Year": 2012,
@@ -109,7 +116,8 @@
     "Nifty EPS Growth (%)": 0.065,
     "DII Net Flow (INR Cr)": -57880,
     "FII Investment Signal": "Favourable",
-    "Primary Regime & Catalyst": "ECB Draghi 'Whatever it takes'; Fed QE3 liquidity boost"
+    "Primary Regime & Catalyst": "ECB Draghi 'Whatever it takes'; Fed QE3 liquidity boost",
+    "US YoY CPI (%)": 2.1
   },
   {
     "Year": 2013,
@@ -123,7 +131,8 @@
     "Nifty EPS Growth (%)": 0.078,
     "DII Net Flow (INR Cr)": -73180,
     "FII Investment Signal": "Neutral",
-    "Primary Regime & Catalyst": "Fed Taper Tantrum shock; sharp Rupee crash ('Fragile Five') & Q4 recovery"
+    "Primary Regime & Catalyst": "Fed Taper Tantrum shock; sharp Rupee crash ('Fragile Five') & Q4 recovery",
+    "US YoY CPI (%)": 1.5
   },
   {
     "Year": 2014,
@@ -137,7 +146,8 @@
     "Nifty EPS Growth (%)": 0.052,
     "DII Net Flow (INR Cr)": -31680,
     "FII Investment Signal": "Favourable",
-    "Primary Regime & Catalyst": "Decisive majority election; global crude price collapse easing CAD"
+    "Primary Regime & Catalyst": "Decisive majority election; global crude price collapse easing CAD",
+    "US YoY CPI (%)": 1.6
   },
   {
     "Year": 2015,
@@ -151,7 +161,8 @@
     "Nifty EPS Growth (%)": -0.015,
     "DII Net Flow (INR Cr)": 66980,
     "FII Investment Signal": "Neutral",
-    "Primary Regime & Catalyst": "China Yuan devaluation shock; initial Fed rate hike; muted corporate earnings"
+    "Primary Regime & Catalyst": "China Yuan devaluation shock; initial Fed rate hike; muted corporate earnings",
+    "US YoY CPI (%)": 0.1
   },
   {
     "Year": 2016,
@@ -165,7 +176,8 @@
     "Nifty EPS Growth (%)": 0.04,
     "DII Net Flow (INR Cr)": 36220,
     "FII Investment Signal": "Neutral",
-    "Primary Regime & Catalyst": "Brexit shock, US election uncertainty, and domestic demonetization drag"
+    "Primary Regime & Catalyst": "Brexit shock, US election uncertainty, and domestic demonetization drag",
+    "US YoY CPI (%)": 1.3
   },
   {
     "Year": 2017,
@@ -179,7 +191,8 @@
     "Nifty EPS Growth (%)": 0.081,
     "DII Net Flow (INR Cr)": 91040,
     "FII Investment Signal": "Favourable",
-    "Primary Regime & Catalyst": "Weak dollar index; synchronized global growth; GST structural reform rollout"
+    "Primary Regime & Catalyst": "Weak dollar index; synchronized global growth; GST structural reform rollout",
+    "US YoY CPI (%)": 2.1
   },
   {
     "Year": 2018,
@@ -193,7 +206,8 @@
     "Nifty EPS Growth (%)": 0.118,
     "DII Net Flow (INR Cr)": 107380,
     "FII Investment Signal": "Unfavourable",
-    "Primary Regime & Catalyst": "Fed quantitative tightening rate hikes; crude spiked to $85; domestic IL&FS crisis"
+    "Primary Regime & Catalyst": "Fed quantitative tightening rate hikes; crude spiked to $85; domestic IL&FS crisis",
+    "US YoY CPI (%)": 2.4
   },
   {
     "Year": 2019,
@@ -207,7 +221,8 @@
     "Nifty EPS Growth (%)": -0.025,
     "DII Net Flow (INR Cr)": 42220,
     "FII Investment Signal": "Favourable",
-    "Primary Regime & Catalyst": "Corporate tax slashed from 30% to 22%; Fed paused & pivoted rate policy"
+    "Primary Regime & Catalyst": "Corporate tax slashed from 30% to 22%; Fed paused & pivoted rate policy",
+    "US YoY CPI (%)": 1.8
   },
   {
     "Year": 2020,
@@ -221,7 +236,8 @@
     "Nifty EPS Growth (%)": 0.142,
     "DII Net Flow (INR Cr)": -35660,
     "FII Investment Signal": "Favourable",
-    "Primary Regime & Catalyst": "Historic COVID fiscal/monetary stimulus; unprecedented global tech/equity surge"
+    "Primary Regime & Catalyst": "Historic COVID fiscal/monetary stimulus; unprecedented global tech/equity surge",
+    "US YoY CPI (%)": 1.2
   },
   {
     "Year": 2021,
@@ -235,7 +251,8 @@
     "Nifty EPS Growth (%)": 0.346,
     "DII Net Flow (INR Cr)": 94670,
     "FII Investment Signal": "Favourable",
-    "Primary Regime & Catalyst": "Economic reopening supercycle; robust corporate earnings expansion"
+    "Primary Regime & Catalyst": "Economic reopening supercycle; robust corporate earnings expansion",
+    "US YoY CPI (%)": 4.7
   },
   {
     "Year": 2022,
@@ -249,7 +266,8 @@
     "Nifty EPS Growth (%)": 0.162,
     "DII Net Flow (INR Cr)": 276700,
     "FII Investment Signal": "Unfavourable",
-    "Primary Regime & Catalyst": "Russia-Ukraine war; fastest Fed rate hikes in 40 yrs; strong DII SIP absorption"
+    "Primary Regime & Catalyst": "Russia-Ukraine war; fastest Fed rate hikes in 40 yrs; strong DII SIP absorption",
+    "US YoY CPI (%)": 8.0
   },
   {
     "Year": 2023,
@@ -263,7 +281,8 @@
     "Nifty EPS Growth (%)": 0.215,
     "DII Net Flow (INR Cr)": 185100,
     "FII Investment Signal": "Favourable",
-    "Primary Regime & Catalyst": "Standout Indian GDP (7%+); stable crude; corporate balance sheet deleveraging"
+    "Primary Regime & Catalyst": "Standout Indian GDP (7%+); stable crude; corporate balance sheet deleveraging",
+    "US YoY CPI (%)": 4.1
   },
   {
     "Year": 2024,
@@ -277,7 +296,8 @@
     "Nifty EPS Growth (%)": 0.088,
     "DII Net Flow (INR Cr)": 385000,
     "FII Investment Signal": "Unfavourable",
-    "Primary Regime & Catalyst": "Stretched valuations; massive Q4 rotation to China stimulus ('Sell India, Buy China')"
+    "Primary Regime & Catalyst": "Stretched valuations; massive Q4 rotation to China stimulus ('Sell India, Buy China')",
+    "US YoY CPI (%)": 3.0
   },
   {
     "Year": 2025,
@@ -291,7 +311,8 @@
     "Nifty EPS Growth (%)": 0.082,
     "DII Net Flow (INR Cr)": 342000,
     "FII Investment Signal": "Unfavourable",
-    "Primary Regime & Catalyst": "Higher-for-longer US yields; elevated crude; geopolitical shipping choke points"
+    "Primary Regime & Catalyst": "Higher-for-longer US yields; elevated crude; geopolitical shipping choke points",
+    "US YoY CPI (%)": 2.7
   },
   {
     "Year": 2026,
@@ -305,6 +326,7 @@
     "Nifty EPS Growth (%)": 0.091,
     "DII Net Flow (INR Cr)": 310000,
     "FII Investment Signal": "Unfavourable",
-    "Primary Regime & Catalyst": "US 10Y near 5%; currency translation drag; robust domestic SIP sponge cushions index"
+    "Primary Regime & Catalyst": "US 10Y near 5%; currency translation drag; robust domestic SIP sponge cushions index",
+    "US YoY CPI (%)": 3.7
   }
 ]

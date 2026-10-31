@@ -39,7 +39,7 @@
           </h1>
         </div>
         <p class="text-xs sm:text-sm text-slate-400 mt-1">
-          Automated Daily Tracking (2005 – 2026) • Macro Transmission Regime Engine
+          Automated Daily Tracking (2005 – 2026) • Macro Transmission, US Inflation & Valuation Regime Engine
         </p>
       </div>
 
@@ -60,8 +60,8 @@
 
     <!-- Active Live Signal Banner -->
     <div id="signalCard" class="rounded-2xl border p-6 transition-all duration-300 relative overflow-hidden bg-slate-900/80 border-slate-800">
-      <div class="flex flex-col lg:flex-row justify-between lg:items-center gap-6">
-        <div>
+      <div class="flex flex-col xl:flex-row justify-between xl:items-center gap-6">
+        <div class="xl:w-4/12">
           <div class="flex items-center gap-2 mb-2">
             <span class="text-xs uppercase tracking-wider font-semibold text-slate-400">Current Regime Status</span>
             <span id="signalBadge" class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300">Evaluating...</span>
@@ -70,37 +70,106 @@
             <h2 id="signalTitle" class="text-3xl sm:text-4xl font-extrabold tracking-tight">Loading Signal...</h2>
             <span id="signalScore" class="text-sm text-slate-400">Score: --</span>
           </div>
-          <p id="signalSummary" class="text-sm text-slate-300 mt-2 max-w-2xl leading-relaxed">
-            Fetching transmission data...
+          <p id="signalSummary" class="text-sm text-slate-300 mt-2 leading-relaxed">
+            Fetching transmission, US inflation & valuation data...
           </p>
           <div class="text-xs text-slate-500 mt-3 flex items-center gap-2">
             <span>🕒 Last Updated: <strong id="lastUpdated" class="text-slate-400">--</strong></span>
           </div>
         </div>
 
-        <!-- Metric Gauges -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 lg:w-1/2">
-          <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 text-center">
+        <!-- Metric Gauges (7 Metrics: US 10Y, US YoY CPI, DXY, Brent, USD/INR, Nifty Fwd P/E, EPS Growth) -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-2.5 xl:w-8/12">
+          <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-center">
             <span class="text-xs text-slate-400">US 10Y Yield</span>
-            <div id="m_us10y" class="text-lg font-bold mt-0.5 text-white">--</div>
+            <div id="m_us10y" class="text-base font-bold mt-0.5 text-white">--</div>
             <span id="b_us10y" class="text-[10px] text-slate-500 block truncate">--</span>
           </div>
-          <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 text-center">
+          <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-center">
+            <span class="text-xs text-amber-400 font-medium">US YoY CPI</span>
+            <div id="m_us_cpi" class="text-base font-bold mt-0.5 text-white">--</div>
+            <span id="b_us_cpi" class="text-[10px] text-slate-500 block truncate">--</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-center">
             <span class="text-xs text-slate-400">Dollar Index (DXY)</span>
-            <div id="m_dxy" class="text-lg font-bold mt-0.5 text-white">--</div>
+            <div id="m_dxy" class="text-base font-bold mt-0.5 text-white">--</div>
             <span id="b_dxy" class="text-[10px] text-slate-500 block truncate">--</span>
           </div>
-          <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 text-center">
+          <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-center">
             <span class="text-xs text-slate-400">Brent Crude</span>
-            <div id="m_brent" class="text-lg font-bold mt-0.5 text-white">--</div>
+            <div id="m_brent" class="text-base font-bold mt-0.5 text-white">--</div>
             <span id="b_brent" class="text-[10px] text-slate-500 block truncate">--</span>
           </div>
-          <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800 text-center">
+          <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-center">
             <span class="text-xs text-slate-400">USD/INR</span>
-            <div id="m_usdinr" class="text-lg font-bold mt-0.5 text-white">--</div>
+            <div id="m_usdinr" class="text-base font-bold mt-0.5 text-white">--</div>
             <span id="b_usdinr" class="text-[10px] text-slate-500 block truncate">--</span>
           </div>
+          <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-center">
+            <span class="text-xs text-cyan-400 font-medium">Nifty Fwd P/E</span>
+            <div id="m_fwd_pe" class="text-base font-bold mt-0.5 text-white">--</div>
+            <span id="b_fwd_pe" class="text-[10px] text-slate-500 block truncate">--</span>
+          </div>
+          <div class="p-3 rounded-xl bg-slate-950/60 border border-slate-800 text-center col-span-2 sm:col-span-1">
+            <span class="text-xs text-emerald-400 font-medium">EPS Growth</span>
+            <div id="m_eps_growth" class="text-base font-bold mt-0.5 text-white">--</div>
+            <span id="b_eps_growth" class="text-[10px] text-slate-500 block truncate">--</span>
+          </div>
         </div>
+      </div>
+    </div>
+
+    <!-- Criteria Matrix Card -->
+    <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800">
+      <h3 class="text-base font-semibold text-slate-100 mb-2">Indicator Signal Criteria Matrix</h3>
+      <p class="text-xs text-slate-400 mb-4">Traffic-Light rules calibrated across US inflation, Fed rate pressures, and equity valuations.</p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-xs text-left">
+          <thead class="bg-slate-950/70 text-slate-400 uppercase text-[10px]">
+            <tr>
+              <th class="py-2.5 px-3">Signal State</th>
+              <th class="py-2.5 px-3">US YoY CPI</th>
+              <th class="py-2.5 px-3">US 10Y & DXY</th>
+              <th class="py-2.5 px-3">Brent Crude</th>
+              <th class="py-2.5 px-3">Nifty Fwd P/E</th>
+              <th class="py-2.5 px-3">EPS Growth</th>
+              <th class="py-2.5 px-3">USD/INR Trend</th>
+              <th class="py-2.5 px-3">FII Strategic Posture</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800 text-slate-300">
+            <tr>
+              <td class="py-2.5 px-3 font-semibold text-emerald-400">Favourable (Green)</td>
+              <td class="py-2.5 px-3 font-medium text-emerald-300">&lt; 2.5% (Fed Pivot)</td>
+              <td class="py-2.5 px-3">&lt; 3.50% &amp; DXY &lt; 95</td>
+              <td class="py-2.5 px-3">&lt; $75 / bbl</td>
+              <td class="py-2.5 px-3">15x – 19x (Attractive)</td>
+              <td class="py-2.5 px-3">&gt; 12% - 15%+</td>
+              <td class="py-2.5 px-3">Stable / Appreciating</td>
+              <td class="py-2.5 px-3 text-slate-400">Aggressive Net Buyers (+₹50k - ₹1.7L Cr)</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 font-semibold text-amber-400">Neutral (Yellow)</td>
+              <td class="py-2.5 px-3 font-medium text-amber-300">2.5% – 3.4% (Sticky)</td>
+              <td class="py-2.5 px-3">3.50% - 4.25% &amp; DXY 95-101.5</td>
+              <td class="py-2.5 px-3">$75 – $85 / bbl</td>
+              <td class="py-2.5 px-3">19x – 21x (Balanced)</td>
+              <td class="py-2.5 px-3">8% - 12% (Steady)</td>
+              <td class="py-2.5 px-3">Gradual 2-3% depreciation</td>
+              <td class="py-2.5 px-3 text-slate-400">Choppy / Selective sector rotations</td>
+            </tr>
+            <tr>
+              <td class="py-2.5 px-3 font-semibold text-rose-400">Unfavourable (Red)</td>
+              <td class="py-2.5 px-3 font-medium text-rose-300">&ge; 3.5% (Hawkish Fed)</td>
+              <td class="py-2.5 px-3">&gt; 4.25% &amp; DXY &gt; 101.5</td>
+              <td class="py-2.5 px-3">&gt; $85 / bbl</td>
+              <td class="py-2.5 px-3">&gt; 21.5x (Stretched)</td>
+              <td class="py-2.5 px-3">&lt; 8% or Misses</td>
+              <td class="py-2.5 px-3">Sharp depreciation (&gt;₹88-92)</td>
+              <td class="py-2.5 px-3 text-slate-400">Aggressive Net Sellers / Capital Flight</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -119,7 +188,7 @@
       <div class="p-5 rounded-xl bg-slate-900 border border-slate-800">
         <span class="text-xs font-medium text-rose-400 uppercase tracking-wide">Unfavourable Years (Red)</span>
         <div class="text-2xl font-bold mt-1 text-white">7 Years</div>
-        <p class="text-xs text-slate-400 mt-1">Yield spikes / Strong USD drag</p>
+        <p class="text-xs text-slate-400 mt-1">US Inflation spikes / Strong USD drag</p>
       </div>
       <div class="p-5 rounded-xl bg-slate-900 border border-slate-800">
         <span class="text-xs font-medium text-cyan-400 uppercase tracking-wide">DII SIP Cushion</span>
@@ -132,13 +201,13 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800">
         <h3 class="text-base font-semibold text-slate-100 mb-1">FII Net Flow vs DII Net Flow (2005 – 2026)</h3>
-        <p class="text-xs text-slate-400 mb-4">Values in ₹ Crores. Note DII institutional domestic sponge post-2021.</p>
+        <p class="text-xs text-slate-400 mb-4">Values in ₹ Crores. Note domestic DII sponge cushioning foreign capital flight post-2021.</p>
         <div class="h-80"><canvas id="flowChart"></canvas></div>
       </div>
 
       <div class="p-5 rounded-2xl bg-slate-900 border border-slate-800">
-        <h3 class="text-base font-semibold text-slate-100 mb-1">Macro Transmission: US 10Y Yield & Brent Crude</h3>
-        <p class="text-xs text-slate-400 mb-4">Rate & commodity inflation pressures influencing foreign capital outflows.</p>
+        <h3 class="text-base font-semibold text-slate-100 mb-1">US Macro Transmission: Yields, CPI Inflation & Crude</h3>
+        <p class="text-xs text-slate-400 mb-4">US CPI inflation & Treasury yields shaping global capital allocation.</p>
         <div class="h-80"><canvas id="macroChart"></canvas></div>
       </div>
     </div>
@@ -148,7 +217,7 @@
       <div class="p-5 border-b border-slate-800 flex justify-between items-center">
         <div>
           <h3 class="text-base font-semibold text-slate-100">Historical Transmission Ledger (2005 – 2026)</h3>
-          <p class="text-xs text-slate-400 mt-0.5">Year-by-year signal categorization & macro catalyst breakdown.</p>
+          <p class="text-xs text-slate-400 mt-0.5">Year-by-year US CPI inflation, valuation metrics, and capital flow signals.</p>
         </div>
         <span class="text-xs text-slate-400">Total Entries: <span id="entryCount">22</span></span>
       </div>
@@ -157,16 +226,19 @@
         <table class="w-full text-left text-xs sm:text-sm">
           <thead class="bg-slate-950/70 text-slate-400 uppercase text-[11px] border-b border-slate-800">
             <tr>
-              <th class="py-3 px-4">Year</th>
-              <th class="py-3 px-4">Signal</th>
-              <th class="py-3 px-4">Nifty Return</th>
-              <th class="py-3 px-4">FII Net Flow (₹ Cr)</th>
-              <th class="py-3 px-4">DII Net Flow (₹ Cr)</th>
-              <th class="py-3 px-4">US 10Y</th>
-              <th class="py-3 px-4">DXY</th>
-              <th class="py-3 px-4">Brent</th>
-              <th class="py-3 px-4">USD/INR</th>
-              <th class="py-3 px-4 min-w-[280px]">Primary Regime Catalyst</th>
+              <th class="py-3 px-3">Year</th>
+              <th class="py-3 px-3">Signal</th>
+              <th class="py-3 px-3">Nifty Return</th>
+              <th class="py-3 px-3">FII Flow (₹ Cr)</th>
+              <th class="py-3 px-3">DII Flow (₹ Cr)</th>
+              <th class="py-3 px-3 text-amber-400">US YoY CPI</th>
+              <th class="py-3 px-3">US 10Y</th>
+              <th class="py-3 px-3">DXY</th>
+              <th class="py-3 px-3">Brent</th>
+              <th class="py-3 px-3">USD/INR</th>
+              <th class="py-3 px-3 text-cyan-400">Fwd P/E</th>
+              <th class="py-3 px-3 text-emerald-400">EPS Growth</th>
+              <th class="py-3 px-3 min-w-[260px]">Primary Regime Catalyst</th>
             </tr>
           </thead>
           <tbody id="historyTableBody" class="divide-y divide-slate-800/60 text-slate-300">
@@ -245,6 +317,9 @@
       document.getElementById('m_us10y').innerText = (m.us10y || '--') + '%';
       document.getElementById('b_us10y').innerText = b.us10y?.assessment || '';
 
+      document.getElementById('m_us_cpi').innerText = (m.us_cpi_yoy || '3.7') + '%';
+      document.getElementById('b_us_cpi').innerText = b.us_cpi_yoy?.assessment || 'Elevated (>=3.5%)';
+
       document.getElementById('m_dxy').innerText = m.dxy || '--';
       document.getElementById('b_dxy').innerText = b.dxy?.assessment || '';
 
@@ -253,6 +328,12 @@
 
       document.getElementById('m_usdinr').innerText = '₹' + (m.usdinr || '--');
       document.getElementById('b_usdinr').innerText = b.usdinr?.assessment || '';
+
+      document.getElementById('m_fwd_pe').innerText = (m.nifty_fwd_pe ? m.nifty_fwd_pe + 'x' : '20.2x');
+      document.getElementById('b_fwd_pe').innerText = b.nifty_fwd_pe?.assessment || 'Balanced (19x-21x)';
+
+      document.getElementById('m_eps_growth').innerText = (m.nifty_eps_growth ? m.nifty_eps_growth + '%' : '9.1%');
+      document.getElementById('b_eps_growth').innerText = b.nifty_eps_growth?.assessment || 'Steady (8%-12%)';
     }
 
     function renderHistory(history) {
@@ -260,7 +341,6 @@
       tbody.innerHTML = '';
       document.getElementById('entryCount').innerText = history.length;
 
-      // Reverse so newest year is on top
       const sorted = [...history].sort((a, b) => b.Year - a.Year);
 
       sorted.forEach(row => {
@@ -275,18 +355,28 @@
 
         const fiiFlow = row['FII Net Equity Flow (INR Cr)'].toLocaleString('en-IN');
         const diiFlow = row['DII Net Flow (INR Cr)'].toLocaleString('en-IN');
+        
+        const cpiVal = row['US YoY CPI (%)'] !== undefined ? row['US YoY CPI (%)'].toFixed(1) + '%' : '--';
+        const cpiColor = (row['US YoY CPI (%)'] <= 2.5) ? 'text-emerald-400' : (row['US YoY CPI (%)'] <= 3.5 ? 'text-amber-400' : 'text-rose-400');
+
+        const fwdPE = row['Nifty Forward P/E (x)'] ? row['Nifty Forward P/E (x)'].toFixed(1) + 'x' : '--';
+        const epsGrowth = (row['Nifty EPS Growth (%)'] * 100).toFixed(1) + '%';
+        const epsColor = row['Nifty EPS Growth (%)'] >= 0.12 ? 'text-emerald-400' : (row['Nifty EPS Growth (%)'] >= 0.08 ? 'text-amber-400' : 'text-rose-400');
 
         tr.innerHTML = `
-          <td class="py-3 px-4 font-semibold text-white">${row.Year}</td>
-          <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[11px] font-medium ${sigColor}">${row['FII Investment Signal']}</span></td>
-          <td class="py-3 px-4 font-medium ${retColor}">${ret}%</td>
-          <td class="py-3 px-4 ${row['FII Net Equity Flow (INR Cr)'] >= 0 ? 'text-slate-200' : 'text-rose-400'}">₹${fiiFlow}</td>
-          <td class="py-3 px-4 text-cyan-300">₹${diiFlow}</td>
-          <td class="py-3 px-4 text-slate-300">${(row['US 10-Yr Yield (%)'] * 100).toFixed(2)}%</td>
-          <td class="py-3 px-4 text-slate-300">${row['US Dollar Index (DXY)']}</td>
-          <td class="py-3 px-4 text-slate-300">$${row['Brent Crude ($/bbl)']}</td>
-          <td class="py-3 px-4 text-slate-300">₹${row['USD/INR Exchange Rate']}</td>
-          <td class="py-3 px-4 text-slate-400 text-xs">${row['Primary Regime & Catalyst']}</td>
+          <td class="py-3 px-3 font-semibold text-white">${row.Year}</td>
+          <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-medium ${sigColor}">${row['FII Investment Signal']}</span></td>
+          <td class="py-3 px-3 font-medium ${retColor}">${ret}%</td>
+          <td class="py-3 px-3 ${row['FII Net Equity Flow (INR Cr)'] >= 0 ? 'text-slate-200' : 'text-rose-400'}">₹${fiiFlow}</td>
+          <td class="py-3 px-3 text-cyan-300">₹${diiFlow}</td>
+          <td class="py-3 px-3 font-semibold ${cpiColor}">${cpiVal}</td>
+          <td class="py-3 px-3 text-slate-300">${(row['US 10-Yr Yield (%)'] * 100).toFixed(2)}%</td>
+          <td class="py-3 px-3 text-slate-300">${row['US Dollar Index (DXY)']}</td>
+          <td class="py-3 px-3 text-slate-300">$${row['Brent Crude ($/bbl)']}</td>
+          <td class="py-3 px-3 text-slate-300">₹${row['USD/INR Exchange Rate']}</td>
+          <td class="py-3 px-3 font-semibold text-cyan-300">${fwdPE}</td>
+          <td class="py-3 px-3 font-semibold ${epsColor}">${epsGrowth}</td>
+          <td class="py-3 px-3 text-slate-400 text-xs">${row['Primary Regime & Catalyst']}</td>
         `;
         tbody.appendChild(tr);
       });
@@ -297,6 +387,7 @@
       const fiiFlows = history.map(d => d['FII Net Equity Flow (INR Cr)']);
       const diiFlows = history.map(d => d['DII Net Flow (INR Cr)']);
       const yields = history.map(d => (d['US 10-Yr Yield (%)'] * 100).toFixed(2));
+      const cpiList = history.map(d => d['US YoY CPI (%)']);
       const brent = history.map(d => d['Brent Crude ($/bbl)']);
 
       // 1. Flow Chart
@@ -346,6 +437,14 @@
               label: 'US 10Y Yield (%)',
               data: yields,
               borderColor: '#f59e0b',
+              yAxisID: 'y1',
+              tension: 0.3,
+              borderWidth: 2
+            },
+            {
+              label: 'US YoY CPI (%)',
+              data: cpiList,
+              borderColor: '#38bdf8',
               yAxisID: 'y1',
               tension: 0.3,
               borderWidth: 2

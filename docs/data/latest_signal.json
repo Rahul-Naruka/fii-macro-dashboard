@@ -2,8 +2,8 @@
   "signal": "UNFAVOURABLE",
   "color": "#ef4444",
   "badge": "RED",
-  "score": -0.75,
-  "summary": "Unfavourable macro transmission. High US risk-free yields & USD strength exert outflow pressure, cushioned by domestic DII SIPs.",
+  "score": -0.57,
+  "summary": "Unfavourable macro transmission. High US CPI & yields keep USD firm, inducing FII selling absorbed by domestic DII SIPs.",
   "breakdown": {
     "us10y": {
       "status": "Red",
@@ -17,6 +17,12 @@
       "label": "US Dollar Index (DXY)",
       "assessment": "Strong USD (>101.5, Capital Flight Headwind)"
     },
+    "us_cpi_yoy": {
+      "status": "Red",
+      "value": 3.7,
+      "label": "US YoY CPI",
+      "assessment": "Elevated Inflation (>=3.5%, Hawkish Fed)"
+    },
     "brent": {
       "status": "Yellow",
       "value": 81.2,
@@ -28,6 +34,18 @@
       "value": 88.65,
       "label": "USD/INR Exchange Rate",
       "assessment": "Sharp Depreciation (>\u20b988)"
+    },
+    "nifty_fwd_pe": {
+      "status": "Yellow",
+      "value": 20.2,
+      "label": "Nifty Forward P/E",
+      "assessment": "Balanced Valuation (19x-21x)"
+    },
+    "nifty_eps_growth": {
+      "status": "Yellow",
+      "value": 9.1,
+      "label": "EPS Growth (%)",
+      "assessment": "Steady (8%-12%)"
     }
   },
   "metrics": {
@@ -36,7 +54,10 @@
     "brent": 81.2,
     "usdinr": 88.65,
     "nifty": 24450.0,
-    "timestamp": "2026-10-31 16:36:25 UTC"
+    "nifty_fwd_pe": 20.2,
+    "nifty_eps_growth": 9.1,
+    "us_cpi_yoy": 3.7,
+    "timestamp": "2026-10-31 17:34:54 UTC"
   },
-  "last_updated": "2026-10-31 16:36:25 UTC"
+  "last_updated": "2026-10-31 17:34:54 UTC"
 }
