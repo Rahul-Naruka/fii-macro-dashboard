@@ -178,16 +178,25 @@ def calculate_signal(metrics):
         color = "#10b981"
         badge = "GREEN"
         summary = "Favourable macro transmission setup. Global disinflation and risk-on liquidity drive steady foreign capital inflows."
+        equity_ratio = 75
+        debt_ratio = 25
+        allocation_strategy = "Risk-On / Aggressive Wealth Accumulation. Overweight Equities (Large & Flexi-cap funds) while keeping 25% in high-quality short/medium-duration Debt for liquidity."
     elif avg_score <= -0.20:
         signal = "UNFAVOURABLE"
         color = "#ef4444"
         badge = "RED"
         summary = "Unfavourable macro transmission. High US CPI & yields keep USD firm, inducing FII selling absorbed by domestic DII SIPs."
+        equity_ratio = 35
+        debt_ratio = 65
+        allocation_strategy = "Capital Preservation / Defensive Rebalance. Overweight Debt & Arbitrage funds (65%). Maintain disciplined equity SIPs (35%) to stagger into valuation corrections."
     else:
         signal = "NEUTRAL"
         color = "#f59e0b"
         badge = "YELLOW"
         summary = "Balanced macro conditions. Cross-currents across US inflation, crude, and valuations result in selective institutional allocation."
+        equity_ratio = 50
+        debt_ratio = 50
+        allocation_strategy = "Balanced / Hybrid Posture. 50:50 Asset Allocation via Balanced Advantage or Multi-Asset Allocation funds. Utilize STPs from liquid/short duration debt into equities."
 
     return {
         "signal": signal,
@@ -195,6 +204,11 @@ def calculate_signal(metrics):
         "badge": badge,
         "score": round(avg_score, 2),
         "summary": summary,
+        "allocation": {
+            "equity": equity_ratio,
+            "debt": debt_ratio,
+            "strategy": allocation_strategy
+        },
         "breakdown": breakdown,
         "metrics": metrics,
         "last_updated": metrics["timestamp"]
