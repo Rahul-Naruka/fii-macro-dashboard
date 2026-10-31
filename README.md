@@ -26,3 +26,11 @@ Full automated version configured for repository: `Rahul-Naruka/fii-macro-dashbo
 4. **Interactive Historical Charts (2005 – 2026)**:
    - FII vs DII Net Capital Flows.
    - US 10Y Yield, US YoY CPI Inflation, and Brent Crude Oil.
+
+---
+
+## ⚠️ Disclaimer
+
+This dashboard and repository are strictly for **educational purposes or personal use** by **Rahul Naruka**, AMFI Registered Mutual Fund Distributor (ARN: **277301**, Contact No.: **9017404142**).
+
+*Mutual fund investments are subject to market risks, read all scheme related documents carefully.*
