@@ -261,11 +261,11 @@
               <th class="py-3 px-3">Equity Flow (₹ Cr)</th>
               <th class="py-3 px-3">Debt Flow (₹ Cr)</th>
               <th class="py-3 px-3 text-cyan-300">Total Net (₹ Cr)</th>
-              <th class="py-3 px-3 text-amber-400">US YoY CPI</th>
-              <th class="py-3 px-3">US 10Y</th>
-              <th class="py-3 px-3">DXY</th>
-              <th class="py-3 px-3">Brent</th>
-              <th class="py-3 px-3">USD/INR</th>
+              <th class="py-3 px-3 text-amber-300">US YoY CPI</th>
+              <th class="py-3 px-3 text-amber-300">US 10Y</th>
+              <th class="py-3 px-3 text-amber-300">DXY</th>
+              <th class="py-3 px-3 text-amber-300">Brent</th>
+              <th class="py-3 px-3 text-amber-300">USD/INR</th>
               <th class="py-3 px-3 min-w-[280px]">Primary Regime & Catalyst</th>
             </tr>
           </thead>
@@ -343,26 +343,53 @@
       const m = data.metrics || {};
       const b = data.breakdown || {};
 
-      document.getElementById('m_us10y').innerText = (m.us10y || '--') + '%';
+      const getStatusClass = (status) => {
+        if (status === 'Green') return 'text-emerald-400';
+        if (status === 'Red') return 'text-rose-400';
+        return 'text-amber-400';
+      };
+
+      // US 10Y Yield
+      const el_us10y = document.getElementById('m_us10y');
+      el_us10y.innerText = (m.us10y || '--') + '%';
+      el_us10y.className = 'text-base font-bold mt-0.5 ' + getStatusClass(b.us10y?.status);
       document.getElementById('b_us10y').innerText = b.us10y?.assessment || '';
 
-      document.getElementById('m_us_cpi').innerText = (m.us_cpi_yoy || '3.7') + '%';
-      document.getElementById('b_us_cpi').innerText = b.us_cpi_yoy?.assessment || 'Elevated (>=3.5%)';
+      // US YoY CPI
+      const el_cpi = document.getElementById('m_us_cpi');
+      el_cpi.innerText = (m.us_cpi_yoy || '3.7') + '%';
+      el_cpi.className = 'text-base font-bold mt-0.5 ' + getStatusClass(b.us_cpi_yoy?.status);
+      document.getElementById('b_us_cpi').innerText = b.us_cpi_yoy?.assessment || '';
 
-      document.getElementById('m_dxy').innerText = m.dxy || '--';
+      // DXY
+      const el_dxy = document.getElementById('m_dxy');
+      el_dxy.innerText = m.dxy || '--';
+      el_dxy.className = 'text-base font-bold mt-0.5 ' + getStatusClass(b.dxy?.status);
       document.getElementById('b_dxy').innerText = b.dxy?.assessment || '';
 
-      document.getElementById('m_brent').innerText = '$' + (m.brent || '--');
+      // Brent
+      const el_brent = document.getElementById('m_brent');
+      el_brent.innerText = '$' + (m.brent || '--');
+      el_brent.className = 'text-base font-bold mt-0.5 ' + getStatusClass(b.brent?.status);
       document.getElementById('b_brent').innerText = b.brent?.assessment || '';
 
-      document.getElementById('m_usdinr').innerText = '₹' + (m.usdinr || '--');
+      // USD/INR
+      const el_usdinr = document.getElementById('m_usdinr');
+      el_usdinr.innerText = '₹' + (m.usdinr || '--');
+      el_usdinr.className = 'text-base font-bold mt-0.5 ' + getStatusClass(b.usdinr?.status);
       document.getElementById('b_usdinr').innerText = b.usdinr?.assessment || '';
 
-      document.getElementById('m_fwd_pe').innerText = (m.nifty_fwd_pe ? m.nifty_fwd_pe + 'x' : '20.2x');
-      document.getElementById('b_fwd_pe').innerText = b.nifty_fwd_pe?.assessment || 'Balanced (19x-21x)';
+      // Nifty Forward P/E
+      const el_pe = document.getElementById('m_fwd_pe');
+      el_pe.innerText = (m.nifty_fwd_pe ? m.nifty_fwd_pe + 'x' : '20.2x');
+      el_pe.className = 'text-base font-bold mt-0.5 ' + getStatusClass(b.nifty_fwd_pe?.status);
+      document.getElementById('b_fwd_pe').innerText = b.nifty_fwd_pe?.assessment || '';
 
-      document.getElementById('m_eps_growth').innerText = (m.nifty_eps_growth ? m.nifty_eps_growth + '%' : '9.1%');
-      document.getElementById('b_eps_growth').innerText = b.nifty_eps_growth?.assessment || 'Steady (8%-12%)';
+      // Nifty EPS Growth
+      const el_eps = document.getElementById('m_eps_growth');
+      el_eps.innerText = (m.nifty_eps_growth ? m.nifty_eps_growth + '%' : '9.1%');
+      el_eps.className = 'text-base font-bold mt-0.5 ' + getStatusClass(b.nifty_eps_growth?.status);
+      document.getElementById('b_eps_growth').innerText = b.nifty_eps_growth?.assessment || '';
 
       // Update Asset Allocation Widget
       const alloc = data.allocation || { equity: 35, debt: 65, strategy: "Balanced 50:50 allocation." };
@@ -373,20 +400,28 @@
       document.getElementById('allocStrategyText').innerText = alloc.strategy;
     }
 
-    function renderHistory(history) {
+function renderHistory(history) {
       const tbody = document.getElementById('historyTableBody');
       tbody.innerHTML = '';
       document.getElementById('entryCount').innerText = history.length;
 
       const sorted = [...history].sort((a, b) => b.Year - a.Year);
 
+      // Helper function for criteria color badges
+      const getBadge = (valStr, state) => {
+        let cls = 'text-amber-400 bg-amber-500/10 border-amber-500/20';
+        if (state === 'Green') cls = 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20';
+        else if (state === 'Red') cls = 'text-rose-400 bg-rose-500/10 border-rose-500/20';
+        return `<span class="px-2 py-0.5 rounded text-[11px] font-semibold border ${cls}">${valStr}</span>`;
+      };
+
       sorted.forEach(row => {
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-800/40 transition-colors';
 
         const sig = row.Signal || row['FII Investment Signal'] || 'Neutral';
-        const sigColor = sig === 'Favourable' ? 'text-emerald-400 bg-emerald-500/10' :
-                         sig === 'Unfavourable' ? 'text-rose-400 bg-rose-500/10' : 'text-amber-400 bg-amber-500/10';
+        const sigColor = sig === 'Favourable' ? 'text-emerald-400 bg-emerald-500/10 border-emerald-500/20' :
+                         sig === 'Unfavourable' ? 'text-rose-400 bg-rose-500/10 border-rose-500/20' : 'text-amber-400 bg-amber-500/10 border-amber-500/20';
 
         const rawRet = row.Nifty_Return !== undefined ? row.Nifty_Return : row['Nifty 50 Return (%)'] || 0;
         const ret = (rawRet * 100).toFixed(1);
@@ -396,28 +431,47 @@
         const debtFlow = (row.Debt_INR_Cr !== undefined ? row.Debt_INR_Cr : 0).toLocaleString('en-IN');
         const totalFlow = (row.Total_INR_Cr !== undefined ? row.Total_INR_Cr : (row.Equity_INR_Cr || 0) + (row.Debt_INR_Cr || 0)).toLocaleString('en-IN');
 
+        // 1. US YoY CPI criteria: <2.5% Green, 2.5-3.4% Yellow, >=3.5% Red
         const cpi = (row.US_YoY_CPI !== undefined ? row.US_YoY_CPI : row['US YoY CPI (%)'] || 2.5);
-        const cpiColor = cpi <= 2.5 ? 'text-emerald-400' : (cpi <= 3.4 ? 'text-amber-400' : 'text-rose-400');
+        const cpiState = cpi < 2.5 ? 'Green' : (cpi < 3.5 ? 'Yellow' : 'Red');
+        const cpiBadge = getBadge(cpi.toFixed(1) + '%', cpiState);
 
-        const yld = (row.US_10Y_Yield !== undefined ? row.US_10Y_Yield : row['US 10-Yr Yield (%)'] || 0.04);
-        const dxy = row.US_DXY || row['US Dollar Index (DXY)'] || '--';
-        const brent = row.Brent_Crude || row['Brent Crude ($/bbl)'] || '--';
-        const usdinr = row.USD_INR || row['USD/INR Exchange Rate'] || '--';
+        // 2. US 10Y Yield criteria: <3.50% Green, 3.50%-4.25% Yellow, >4.25% Red
+        const rawYld = (row.US_10Y_Yield !== undefined ? row.US_10Y_Yield : row['US 10-Yr Yield (%)'] || 0.04);
+        const yldVal = rawYld * 100;
+        const yldState = yldVal < 3.50 ? 'Green' : (yldVal <= 4.25 ? 'Yellow' : 'Red');
+        const yldBadge = getBadge(yldVal.toFixed(2) + '%', yldState);
+
+        // 3. DXY criteria: <95 Green, 95-101.5 Yellow, >101.5 Red
+        const rawDxy = parseFloat(row.US_DXY || row['US Dollar Index (DXY)'] || 100);
+        const dxyState = rawDxy < 95.0 ? 'Green' : (rawDxy <= 101.5 ? 'Yellow' : 'Red');
+        const dxyBadge = getBadge(rawDxy.toFixed(1), dxyState);
+
+        // 4. Brent Crude criteria: <$75 Green, $75-$85 Yellow, >$85 Red
+        const rawBrent = parseFloat(row.Brent_Crude || row['Brent Crude ($/bbl)'] || 70);
+        const brentState = rawBrent < 75.0 ? 'Green' : (rawBrent <= 85.0 ? 'Yellow' : 'Red');
+        const brentBadge = getBadge('$' + rawBrent.toFixed(1), brentState);
+
+        // 5. USD/INR criteria: <84.0 Green, 84.0-88.0 Yellow, >88.0 Red
+        const rawUsdInr = parseFloat(row.USD_INR || row['USD/INR Exchange Rate'] || 70);
+        const usdInrState = rawUsdInr < 84.0 ? 'Green' : (rawUsdInr <= 88.0 ? 'Yellow' : 'Red');
+        const usdInrBadge = getBadge('₹' + rawUsdInr.toFixed(1), usdInrState);
+
         const cat = row.Catalyst || row['Primary Regime & Catalyst'] || '--';
         const fy = row.FY ? `(${row.FY})` : '';
 
         tr.innerHTML = `
           <td class="py-3 px-3 font-semibold text-white whitespace-nowrap">${row.Year} <span class="text-[10px] text-slate-500 block sm:inline font-normal">${fy}</span></td>
-          <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-medium ${sigColor}">${sig}</span></td>
-          <td class="py-3 px-3 font-medium ${retColor}">${ret}%</td>
+          <td class="py-3 px-3"><span class="px-2 py-0.5 rounded text-[11px] font-semibold border ${sigColor}">${sig}</span></td>
+          <td class="py-3 px-3 font-bold ${retColor}">${ret}%</td>
           <td class="py-3 px-3 ${parseFloat(eqFlow) >= 0 ? 'text-slate-200' : 'text-rose-400'}">₹${eqFlow}</td>
           <td class="py-3 px-3 ${parseFloat(debtFlow) >= 0 ? 'text-cyan-300' : 'text-rose-400'}">₹${debtFlow}</td>
           <td class="py-3 px-3 font-bold ${parseFloat(totalFlow) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">₹${totalFlow}</td>
-          <td class="py-3 px-3 font-semibold ${cpiColor}">${cpi}%</td>
-          <td class="py-3 px-3 text-slate-300">${(yld * 100).toFixed(2)}%</td>
-          <td class="py-3 px-3 text-slate-300">${dxy}</td>
-          <td class="py-3 px-3 text-slate-300">$${brent}</td>
-          <td class="py-3 px-3 text-slate-300">₹${usdinr}</td>
+          <td class="py-3 px-3">${cpiBadge}</td>
+          <td class="py-3 px-3">${yldBadge}</td>
+          <td class="py-3 px-3">${dxyBadge}</td>
+          <td class="py-3 px-3">${brentBadge}</td>
+          <td class="py-3 px-3">${usdInrBadge}</td>
           <td class="py-3 px-3 text-slate-400 text-xs">${cat}</td>
         `;
         tbody.appendChild(tr);
