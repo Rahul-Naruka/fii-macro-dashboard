@@ -204,9 +204,13 @@ def main():
     metrics = fetch_macro_and_valuation_metrics()
     signal_data = calculate_signal(metrics)
     
-    os.makedirs("data", exist_ok=True)
-    with open(LIVE_SIGNAL_FILE, "w") as f:
-        json.dump(signal_data, f, indent=2)
+    # Ensure both data directories are synced
+    for d in ["data", "docs/data"]:
+        os.makedirs(d, exist_ok=True)
+        filepath = os.path.join(d, "latest_signal.json")
+        with open(filepath, "w") as f:
+            json.dump(signal_data, f, indent=2)
+        print(f"Updated: {filepath}")
     print(f"Updated live signal: {signal_data['signal']} (Score: {signal_data['score']})")
 
 if __name__ == "__main__":

@@ -263,19 +263,24 @@
     let macroChartInstance = null;
 
     async function loadDashboardData() {
+      const cacheBust = '?t=' + new Date().getTime();
       try {
-        // 1. Fetch Live Signal
-        const signalRes = await fetch('data/latest_signal.json');
+        // 1. Fetch Live Signal (Cache-busted)
+        const signalRes = await fetch('./data/latest_signal.json' + cacheBust);
         const signalData = await signalRes.json();
         renderSignal(signalData);
+      } catch (err) {
+        console.warn('Live signal fetch fallback:', err);
+      }
 
-        // 2. Fetch History
-        const histRes = await fetch('data/macro_history.json');
+      try {
+        // 2. Fetch History (Cache-busted)
+        const histRes = await fetch('./data/macro_history.json' + cacheBust);
         const histData = await histRes.json();
         renderHistory(histData);
         renderCharts(histData);
       } catch (err) {
-        console.error('Error loading dashboard data:', err);
+        console.warn('Historical data fetch fallback:', err);
       }
     }
 
