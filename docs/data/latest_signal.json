@@ -1,0 +1,42 @@
+{
+  "signal": "UNFAVOURABLE",
+  "color": "#ef4444",
+  "badge": "RED",
+  "score": -0.75,
+  "summary": "Unfavourable macro transmission. High US risk-free yields & USD strength exert outflow pressure, cushioned by domestic DII SIPs.",
+  "breakdown": {
+    "us10y": {
+      "status": "Red",
+      "value": 4.28,
+      "label": "US 10Y Yield",
+      "assessment": "Elevated Yield Drag (>4.25%)"
+    },
+    "dxy": {
+      "status": "Red",
+      "value": 102.4,
+      "label": "US Dollar Index (DXY)",
+      "assessment": "Strong USD (>101.5, Capital Flight Headwind)"
+    },
+    "brent": {
+      "status": "Yellow",
+      "value": 81.2,
+      "label": "Brent Crude ($/bbl)",
+      "assessment": "Moderate ($75-$85)"
+    },
+    "usdinr": {
+      "status": "Red",
+      "value": 88.65,
+      "label": "USD/INR Exchange Rate",
+      "assessment": "Sharp Depreciation (>\u20b988)"
+    }
+  },
+  "metrics": {
+    "us10y": 4.28,
+    "dxy": 102.4,
+    "brent": 81.2,
+    "usdinr": 88.65,
+    "nifty": 24450.0,
+    "timestamp": "2026-10-31 16:36:25 UTC"
+  },
+  "last_updated": "2026-10-31 16:36:25 UTC"
+}
