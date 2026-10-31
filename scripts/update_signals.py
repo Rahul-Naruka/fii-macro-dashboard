@@ -173,29 +173,96 @@ def calculate_signal(metrics):
 
     avg_score = sum(scores) / len(scores)
 
+    # Dynamic Profile-Based Asset Allocation (ZFunds & Quantitative Fund Selection Calibration)
     if avg_score >= 0.30:
         signal = "FAVOURABLE"
         color = "#10b981"
         badge = "GREEN"
         summary = "Favourable macro transmission setup. Global disinflation and risk-on liquidity drive steady foreign capital inflows."
-        equity_ratio = 75
-        debt_ratio = 25
+        profiles = {
+            "conservative": {
+                "equity": 35, "debt": 65,
+                "strategy": "Capital preservation with growth kicker. Deploy in Conservative Hybrid & Arbitrage funds + Banking & PSU Debt.",
+                "funds": ["ICICI Prudential Regular Savings Fund", "HDFC Banking and PSU Debt Fund", "Kotak Equity Arbitrage Fund"]
+            },
+            "moderate": {
+                "equity": 65, "debt": 35,
+                "strategy": "Growth with controlled volatility. Overweight Balanced Advantage (BAF) & Multi-Asset Allocation funds.",
+                "funds": ["HDFC Balanced Advantage Fund", "ICICI Prudential Multi-Asset Fund", "Aditya Birla Sun Life Corporate Bond Fund"]
+            },
+            "aggressive": {
+                "equity": 80, "debt": 20,
+                "strategy": "Aggressive wealth compounding. High exposure to Flexi Cap & Large & Mid Cap funds with 20% liquid reserve.",
+                "funds": ["Parag Parikh Flexi Cap Fund", "Mirae Asset Large & Midcap Fund", "HDFC Short Term Debt Fund"]
+            },
+            "very_aggressive": {
+                "equity": 95, "debt": 5,
+                "strategy": "Maximum alpha expansion. Overweight Mid Cap, Small Cap, and focused growth funds.",
+                "funds": ["Motilal Oswal Midcap Fund", "Nippon India Small Cap Fund", "Bandhan Sterling Value Fund"]
+            }
+        }
+        overall_equity = 75
+        overall_debt = 25
         allocation_strategy = "Risk-On / Aggressive Wealth Accumulation. Overweight Equities (Large & Flexi-cap funds) while keeping 25% in high-quality short/medium-duration Debt for liquidity."
     elif avg_score <= -0.20:
         signal = "UNFAVOURABLE"
         color = "#ef4444"
         badge = "RED"
         summary = "Unfavourable macro transmission. High US CPI & yields keep USD firm, inducing FII selling absorbed by domestic DII SIPs."
-        equity_ratio = 35
-        debt_ratio = 65
+        profiles = {
+            "conservative": {
+                "equity": 10, "debt": 90,
+                "strategy": "Maximum capital safety. Strict allocation to Sovereign G-Sec, Banking & PSU Debt, and Ultra Short Duration funds.",
+                "funds": ["SBI Banking and PSU Debt Fund", "Bandhan All Seasons Bond Fund", "HDFC Ultra Short Term Fund"]
+            },
+            "moderate": {
+                "equity": 30, "debt": 70,
+                "strategy": "Capital defence & tactical SIP. Park in Arbitrage & Corporate Bond funds; maintain disciplined equity SIPs.",
+                "funds": ["Kotak Equity Arbitrage Fund", "HDFC Corporate Bond Fund", "ICICI Prudential Balanced Advantage Fund"]
+            },
+            "aggressive": {
+                "equity": 45, "debt": 55,
+                "strategy": "Defensive rebalancing. High quality Short Duration & Arbitrage funds (55%) with 6-month STP into Flexi Cap.",
+                "funds": ["Parag Parikh Flexi Cap Fund (via STP)", "ICICI Prudential Short Term Fund", "Tata Arbitrage Fund"]
+            },
+            "very_aggressive": {
+                "equity": 60, "debt": 40,
+                "strategy": "Staggered dip buying. Maintain existing Mid/Small Cap SIPs while building 40% debt 'dry powder' for corrections.",
+                "funds": ["Motilal Oswal Midcap Fund (SIP)", "Nippon India Small Cap Fund (SIP)", "HDFC Money Market Fund (STP Source)"]
+            }
+        }
+        overall_equity = 35
+        overall_debt = 65
         allocation_strategy = "Capital Preservation / Defensive Rebalance. Overweight Debt & Arbitrage funds (65%). Maintain disciplined equity SIPs (35%) to stagger into valuation corrections."
     else:
         signal = "NEUTRAL"
         color = "#f59e0b"
         badge = "YELLOW"
         summary = "Balanced macro conditions. Cross-currents across US inflation, crude, and valuations result in selective institutional allocation."
-        equity_ratio = 50
-        debt_ratio = 50
+        profiles = {
+            "conservative": {
+                "equity": 20, "debt": 80,
+                "strategy": "Income generation with minor equity kicker via Conservative Hybrid and High Quality Corporate Debt.",
+                "funds": ["Canara Robeco Conservative Hybrid Fund", "HDFC Corporate Bond Fund", "Aditya Birla Sun Life Savings Fund"]
+            },
+            "moderate": {
+                "equity": 50, "debt": 50,
+                "strategy": "Equalized hybrid allocation. Dynamic rebalancing via Balanced Advantage & Multi-Asset Allocation funds.",
+                "funds": ["HDFC Balanced Advantage Fund", "SBI Multi Asset Allocation Fund", "ICICI Prudential All Seasons Bond Fund"]
+            },
+            "aggressive": {
+                "equity": 65, "debt": 35,
+                "strategy": "Selective growth posture. Core allocations in Large & Mid Cap funds with active STP from Short Term Debt.",
+                "funds": ["Mirae Asset Large & Midcap Fund", "Parag Parikh Flexi Cap Fund", "Kotak Short Term Fund"]
+            },
+            "very_aggressive": {
+                "equity": 80, "debt": 20,
+                "strategy": "Alpha bias. Continue heavy SIPs in Mid Cap & Flexi Cap funds with 20% parked in Liquid funds for market dips.",
+                "funds": ["Motilal Oswal Midcap Fund", "Quant Flexi Cap Fund", "ICICI Prudential Liquid Fund"]
+            }
+        }
+        overall_equity = 50
+        overall_debt = 50
         allocation_strategy = "Balanced / Hybrid Posture. 50:50 Asset Allocation via Balanced Advantage or Multi-Asset Allocation funds. Utilize STPs from liquid/short duration debt into equities."
 
     return {
@@ -205,9 +272,10 @@ def calculate_signal(metrics):
         "score": round(avg_score, 2),
         "summary": summary,
         "allocation": {
-            "equity": equity_ratio,
-            "debt": debt_ratio,
-            "strategy": allocation_strategy
+            "equity": overall_equity,
+            "debt": overall_debt,
+            "strategy": allocation_strategy,
+            "profiles": profiles
         },
         "breakdown": breakdown,
         "metrics": metrics,

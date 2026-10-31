@@ -7,7 +7,49 @@
   "allocation": {
     "equity": 35,
     "debt": 65,
-    "strategy": "Capital Preservation / Defensive Rebalance. Overweight Debt & Arbitrage funds (65%). Maintain disciplined equity SIPs (35%) to stagger into valuation corrections."
+    "strategy": "Capital Preservation / Defensive Rebalance. Overweight Debt & Arbitrage funds (65%). Maintain disciplined equity SIPs (35%) to stagger into valuation corrections.",
+    "profiles": {
+      "conservative": {
+        "equity": 10,
+        "debt": 90,
+        "strategy": "Maximum capital safety. Strict allocation to Sovereign G-Sec, Banking & PSU Debt, and Ultra Short Duration funds.",
+        "funds": [
+          "SBI Banking and PSU Debt Fund",
+          "Bandhan All Seasons Bond Fund",
+          "HDFC Ultra Short Term Fund"
+        ]
+      },
+      "moderate": {
+        "equity": 30,
+        "debt": 70,
+        "strategy": "Capital defence & tactical SIP. Park in Arbitrage & Corporate Bond funds; maintain disciplined equity SIPs.",
+        "funds": [
+          "Kotak Equity Arbitrage Fund",
+          "HDFC Corporate Bond Fund",
+          "ICICI Prudential Balanced Advantage Fund"
+        ]
+      },
+      "aggressive": {
+        "equity": 45,
+        "debt": 55,
+        "strategy": "Defensive rebalancing. High quality Short Duration & Arbitrage funds (55%) with 6-month STP into Flexi Cap.",
+        "funds": [
+          "Parag Parikh Flexi Cap Fund (via STP)",
+          "ICICI Prudential Short Term Fund",
+          "Tata Arbitrage Fund"
+        ]
+      },
+      "very_aggressive": {
+        "equity": 60,
+        "debt": 40,
+        "strategy": "Staggered dip buying. Maintain existing Mid/Small Cap SIPs while building 40% debt 'dry powder' for corrections.",
+        "funds": [
+          "Motilal Oswal Midcap Fund (SIP)",
+          "Nippon India Small Cap Fund (SIP)",
+          "HDFC Money Market Fund (STP Source)"
+        ]
+      }
+    }
   },
   "breakdown": {
     "us10y": {
@@ -62,7 +104,7 @@
     "nifty_fwd_pe": 20.2,
     "nifty_eps_growth": 9.1,
     "us_cpi_yoy": 3.7,
-    "timestamp": "2026-10-31 18:06:38 UTC"
+    "timestamp": "2026-10-31 18:33:41 UTC"
   },
-  "last_updated": "2026-10-31 18:06:38 UTC"
+  "last_updated": "2026-10-31 18:33:41 UTC"
 }

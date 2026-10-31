@@ -26,6 +26,48 @@
 </head>
 <body class="bg-slate-950 text-slate-100 min-h-screen antialiased flex flex-col selection:bg-blue-600 selection:text-white">
 
+  <!-- PIN Authentication Screen Overlay -->
+  <div id="pinAuthOverlay" class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/95 backdrop-blur-md transition-opacity duration-300">
+    <div class="w-full max-w-sm mx-4 p-8 rounded-2xl bg-slate-900 border border-slate-800 shadow-2xl text-center relative overflow-hidden">
+      <!-- Glow effect -->
+      <div class="absolute -top-12 -left-12 w-32 h-32 bg-blue-500/20 rounded-full blur-2xl pointer-events-none"></div>
+      <div class="absolute -bottom-12 -right-12 w-32 h-32 bg-emerald-500/20 rounded-full blur-2xl pointer-events-none"></div>
+      
+      <!-- Lock Icon -->
+      <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+      </div>
+
+      <h2 class="text-xl font-bold text-white tracking-tight">Security Access Required</h2>
+      <p class="text-xs text-slate-400 mt-1.5 mb-6">Enter your 4-digit security PIN to access the FII Macro Dashboard</p>
+
+      <form id="pinForm" onsubmit="handlePinSubmit(event)" class="space-y-5">
+        <div class="flex justify-center gap-3" id="pinInputsContainer">
+          <input type="password" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="pin-digit w-12 h-14 text-center text-2xl font-bold bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition" autofocus autocomplete="off" />
+          <input type="password" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="pin-digit w-12 h-14 text-center text-2xl font-bold bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition" autocomplete="off" />
+          <input type="password" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="pin-digit w-12 h-14 text-center text-2xl font-bold bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition" autocomplete="off" />
+          <input type="password" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="pin-digit w-12 h-14 text-center text-2xl font-bold bg-slate-950 border border-slate-700 rounded-xl text-white focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 transition" autocomplete="off" />
+        </div>
+
+        <div id="pinErrorMsg" class="text-xs font-semibold text-rose-400 hidden animate-pulse">Incorrect PIN. Please try again.</div>
+
+        <button type="submit" class="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-sm shadow-lg shadow-blue-500/25 transition">
+          Unlock Dashboard
+        </button>
+      </form>
+
+      <div class="mt-6 text-[11px] text-slate-500 flex items-center justify-center gap-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+        </svg>
+        <span>End-to-End Client Data Protection</span>
+      </div>
+    </div>
+  </div>
+
+
   <!-- Header -->
   <header class="border-b border-slate-800/80 bg-slate-900/60 backdrop-blur sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
@@ -48,6 +90,12 @@
         </span>
         <button id="refreshBtn" onclick="loadDashboardData()" class="px-3 py-1.5 text-xs bg-slate-800 hover:bg-slate-700 rounded-lg border border-slate-700 transition">
           🔄 Refresh
+        </button>
+        <button id="lockBtn" onclick="logoutDashboard()" class="px-3 py-1.5 text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 rounded-lg border border-rose-500/20 transition flex items-center gap-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          Lock
         </button>
       </div>
     </div>
@@ -117,34 +165,109 @@
       </div>
     </div>
 
-    <!-- Dynamic Equity vs Debt Asset Allocation Advisor Widget -->
-    <div class="rounded-2xl border p-6 bg-slate-900/90 border-slate-800 shadow-xl">
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800/80 pb-4 mb-5">
+    <!-- Dynamic Equity vs Debt Asset Allocation Advisor Widget with 4 Risk Profiles -->
+    <div class="rounded-2xl border p-6 bg-slate-900/90 border-slate-800 shadow-xl space-y-6">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800/80 pb-4">
         <div>
           <div class="flex items-center gap-2">
-            <span class="text-xs uppercase tracking-wider font-semibold text-blue-400">Tactical Asset Allocation Engine</span>
-            <span class="text-[10px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20">Data Calibrated</span>
+            <span class="text-xs uppercase tracking-wider font-semibold text-blue-400">Dynamic Asset Allocation Engine</span>
+            <span class="text-[10px] px-2 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/20">ZFunds & Platform Calibrated</span>
           </div>
-          <h3 class="text-lg font-bold text-white mt-1">Recommended Portfolio Allocation: Equity vs Debt</h3>
+          <h3 class="text-lg font-bold text-white mt-1">Multi-Profile Asset Allocation & Scheme Selector</h3>
+          <p class="text-xs text-slate-400 mt-0.5">Tactical equity vs debt ratios tailored to client risk tolerance under current macro transmission regime.</p>
         </div>
-        <div class="flex items-center gap-4 text-xs font-semibold">
-          <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-blue-500"></span> Equity: <span id="allocEqText" class="text-blue-400">--%</span></div>
-          <div class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-emerald-500"></span> Debt / Cash: <span id="allocDebtText" class="text-emerald-400">--%</span></div>
+
+        <!-- Risk Profile Selector Buttons -->
+        <div class="flex flex-wrap gap-1.5 p-1 bg-slate-950 rounded-xl border border-slate-800" id="profileTabGroup">
+          <button onclick="selectProfile('conservative')" id="tab_conservative" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white">Conservative</button>
+          <button onclick="selectProfile('moderate')" id="tab_moderate" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white">Moderate</button>
+          <button onclick="selectProfile('aggressive')" id="tab_aggressive" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all bg-blue-600 text-white shadow">Aggressive</button>
+          <button onclick="selectProfile('very_aggressive')" id="tab_very_aggressive" class="px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white">Very Aggressive</button>
         </div>
       </div>
 
-      <!-- Split Bar Progress -->
-      <div class="w-full bg-slate-950 rounded-full h-4 overflow-hidden flex p-0.5 border border-slate-800">
-        <div id="allocEqBar" class="bg-gradient-to-r from-blue-600 to-indigo-500 h-full rounded-l-full transition-all duration-700" style="width: 50%;"></div>
-        <div id="allocDebtBar" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-r-full transition-all duration-700" style="width: 50%;"></div>
+      <!-- Active Profile Ratio Bar & Metrics -->
+      <div class="space-y-3">
+        <div class="flex justify-between items-center text-xs font-bold">
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-blue-500"></span>
+            <span>Target Equity: <span id="activeEquityVal" class="text-blue-400 text-sm font-extrabold">--%</span></span>
+          </div>
+          <div class="flex items-center gap-2">
+            <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+            <span>Target Debt / Cash: <span id="activeDebtVal" class="text-emerald-400 text-sm font-extrabold">--%</span></span>
+          </div>
+        </div>
+
+        <div class="w-full bg-slate-950 rounded-full h-5 overflow-hidden flex p-0.5 border border-slate-800 shadow-inner">
+          <div id="activeEquityBar" class="bg-gradient-to-r from-blue-600 to-indigo-500 h-full rounded-l-full transition-all duration-700 flex items-center justify-center text-[10px] font-bold text-white" style="width: 50%;">50%</div>
+          <div id="activeDebtBar" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-r-full transition-all duration-700 flex items-center justify-center text-[10px] font-bold text-slate-950" style="width: 50%;">50%</div>
+        </div>
       </div>
 
-      <!-- Advisory Guidance Box -->
-      <div class="mt-4 p-4 rounded-xl bg-slate-950/70 border border-slate-800/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
-        <div class="text-xs text-slate-300 leading-relaxed">
-          <strong class="text-white block sm:inline mb-1 sm:mb-0 mr-2">🎯 Tactical Playbook:</strong>
-          <span id="allocStrategyText">Loading allocation strategy...</span>
+      <!-- Strategy & Recommended Funds Card -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2 p-4 rounded-xl bg-slate-950/70 border border-slate-800 flex flex-col justify-between">
+          <div>
+            <span class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider block mb-1">🎯 Tactical Playbook</span>
+            <p id="activeStrategyText" class="text-xs text-slate-200 leading-relaxed">Loading strategy...</p>
+          </div>
+          <div class="mt-3 pt-3 border-t border-slate-800/80 flex items-center gap-2 text-[11px] text-slate-400">
+            <span>Methodology: <strong>Rolling 3Y/5Y Returns</strong>, <strong>Downside Protection</strong> & <strong>Portfolio Overlap Control</strong>.</span>
+          </div>
         </div>
+
+        <div class="p-4 rounded-xl bg-slate-950/70 border border-slate-800">
+          <span class="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider block mb-2">⭐ Model Curated Funds</span>
+          <ul id="activeFundList" class="space-y-1.5 text-xs text-slate-300">
+            <!-- Rendered dynamically -->
+          </ul>
+        </div>
+      </div>
+
+      <!-- 4 Profiles Comparison Table -->
+      <div class="overflow-x-auto pt-2">
+        <table class="w-full text-left text-xs">
+          <thead class="bg-slate-950/80 text-slate-400 uppercase text-[10px] border-b border-slate-800">
+            <tr>
+              <th class="py-2.5 px-3">Risk Profile</th>
+              <th class="py-2.5 px-3">Equity Split</th>
+              <th class="py-2.5 px-3">Debt / Cash Split</th>
+              <th class="py-2.5 px-3">Primary Fund Categories</th>
+              <th class="py-2.5 px-3">Deployment Mode</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-800/60 text-slate-300">
+            <tr class="hover:bg-slate-800/30">
+              <td class="py-2 px-3 font-semibold text-white">Conservative</td>
+              <td class="py-2 px-3 text-blue-400 font-bold" id="tbl_eq_conservative">--%</td>
+              <td class="py-2 px-3 text-emerald-400 font-bold" id="tbl_debt_conservative">--%</td>
+              <td class="py-2 px-3 text-slate-400 text-xs">Conservative Hybrid, Arbitrage, Banking & PSU Debt</td>
+              <td class="py-2 px-3 text-slate-300">Lumpsum in Debt + Low equity STP</td>
+            </tr>
+            <tr class="hover:bg-slate-800/30">
+              <td class="py-2 px-3 font-semibold text-white">Moderate</td>
+              <td class="py-2 px-3 text-blue-400 font-bold" id="tbl_eq_moderate">--%</td>
+              <td class="py-2 px-3 text-emerald-400 font-bold" id="tbl_debt_moderate">--%</td>
+              <td class="py-2 px-3 text-slate-400 text-xs">Balanced Advantage (BAF), Multi-Asset, Corporate Bond</td>
+              <td class="py-2 px-3 text-slate-300">50:50 Dynamic Rebalance + Regular SIP</td>
+            </tr>
+            <tr class="hover:bg-slate-800/30">
+              <td class="py-2 px-3 font-semibold text-white">Aggressive</td>
+              <td class="py-2 px-3 text-blue-400 font-bold" id="tbl_eq_aggressive">--%</td>
+              <td class="py-2 px-3 text-emerald-400 font-bold" id="tbl_debt_aggressive">--%</td>
+              <td class="py-2 px-3 text-slate-400 text-xs">Flexi Cap, Large & Mid Cap, Short Term Debt</td>
+              <td class="py-2 px-3 text-slate-300">Uninterrupted SIP + 6-month STP reserve</td>
+            </tr>
+            <tr class="hover:bg-slate-800/30">
+              <td class="py-2 px-3 font-semibold text-white">Very Aggressive</td>
+              <td class="py-2 px-3 text-blue-400 font-bold" id="tbl_eq_very_aggressive">--%</td>
+              <td class="py-2 px-3 text-emerald-400 font-bold" id="tbl_debt_very_aggressive">--%</td>
+              <td class="py-2 px-3 text-slate-400 text-xs">Mid Cap, Small Cap, Flexi Cap, Liquid for Dips</td>
+              <td class="py-2 px-3 text-slate-300">Heavy SIPs + opportunistic dip buying</td>
+            </tr>
+          </tbody>
+        </table>
       </div>
     </div>
 
@@ -391,16 +514,67 @@
       el_eps.className = 'text-base font-bold mt-0.5 ' + getStatusClass(b.nifty_eps_growth?.status);
       document.getElementById('b_eps_growth').innerText = b.nifty_eps_growth?.assessment || '';
 
-      // Update Asset Allocation Widget
-      const alloc = data.allocation || { equity: 35, debt: 65, strategy: "Balanced 50:50 allocation." };
-      document.getElementById('allocEqText').innerText = alloc.equity + '%';
-      document.getElementById('allocDebtText').innerText = alloc.debt + '%';
-      document.getElementById('allocEqBar').style.width = alloc.equity + '%';
-      document.getElementById('allocDebtBar').style.width = alloc.debt + '%';
-      document.getElementById('allocStrategyText').innerText = alloc.strategy;
+      // Store data & refresh dynamic risk profiles
+      currentSignalData = data;
+      const profiles = data.allocation?.profiles;
+      updateProfilesTable(profiles);
+      selectProfile(selectedProfileKey);
     }
 
-function renderHistory(history) {
+let currentSignalData = null;
+    let selectedProfileKey = 'aggressive';
+
+    function selectProfile(profileKey) {
+      selectedProfileKey = profileKey;
+      const tabs = ['conservative', 'moderate', 'aggressive', 'very_aggressive'];
+      tabs.forEach(t => {
+        const btn = document.getElementById('tab_' + t);
+        if (t === profileKey) {
+          btn.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all bg-blue-600 text-white shadow';
+        } else {
+          btn.className = 'px-3 py-1.5 text-xs font-semibold rounded-lg transition-all text-slate-400 hover:text-white';
+        }
+      });
+
+      if (!currentSignalData || !currentSignalData.allocation || !currentSignalData.allocation.profiles) return;
+      const prof = currentSignalData.allocation.profiles[profileKey];
+      if (!prof) return;
+
+      document.getElementById('activeEquityVal').innerText = prof.equity + '%';
+      document.getElementById('activeDebtVal').innerText = prof.debt + '%';
+
+      const eqBar = document.getElementById('activeEquityBar');
+      const debtBar = document.getElementById('activeDebtBar');
+      eqBar.style.width = prof.equity + '%';
+      eqBar.innerText = prof.equity + '%';
+      debtBar.style.width = prof.debt + '%';
+      debtBar.innerText = prof.debt + '%';
+
+      document.getElementById('activeStrategyText').innerText = prof.strategy;
+
+      const fundList = document.getElementById('activeFundList');
+      fundList.innerHTML = '';
+      (prof.funds || []).forEach(f => {
+        const li = document.createElement('li');
+        li.className = 'flex items-center gap-2';
+        li.innerHTML = `<span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span><span>${f}</span>`;
+        fundList.appendChild(li);
+      });
+    }
+
+    function updateProfilesTable(profiles) {
+      if (!profiles) return;
+      ['conservative', 'moderate', 'aggressive', 'very_aggressive'].forEach(k => {
+        if (profiles[k]) {
+          const elEq = document.getElementById('tbl_eq_' + k);
+          const elDebt = document.getElementById('tbl_debt_' + k);
+          if (elEq) elEq.innerText = profiles[k].equity + '%';
+          if (elDebt) elDebt.innerText = profiles[k].debt + '%';
+        }
+      });
+    }
+
+    function renderHistory(history) {
       const tbody = document.getElementById('historyTableBody');
       tbody.innerHTML = '';
       document.getElementById('entryCount').innerText = history.length;
@@ -578,7 +752,112 @@ function renderHistory(history) {
       });
     }
 
-    document.addEventListener('DOMContentLoaded', loadDashboardData);
+    
+    // --- PIN Authentication Logic ---
+    const CORRECT_PIN = "0143";
+    const AUTH_STORAGE_KEY = "fii_dashboard_auth";
+
+    function checkAuthStatus() {
+      const isAuth = sessionStorage.getItem(AUTH_STORAGE_KEY);
+      const overlay = document.getElementById('pinAuthOverlay');
+      const mainContent = document.querySelector('main');
+      const header = document.querySelector('header');
+      const footer = document.querySelector('footer');
+
+      if (isAuth === 'true') {
+        if (overlay) overlay.classList.add('hidden');
+        if (mainContent) mainContent.classList.remove('blur-sm', 'pointer-events-none');
+        if (header) header.classList.remove('blur-sm', 'pointer-events-none');
+        if (footer) footer.classList.remove('blur-sm', 'pointer-events-none');
+        loadDashboardData();
+      } else {
+        if (overlay) overlay.classList.remove('hidden');
+        if (mainContent) mainContent.classList.add('blur-sm', 'pointer-events-none');
+        if (header) header.classList.add('blur-sm', 'pointer-events-none');
+        if (footer) footer.classList.add('blur-sm', 'pointer-events-none');
+        setupPinInputs();
+      }
+    }
+
+    function setupPinInputs() {
+      const inputs = document.querySelectorAll('.pin-digit');
+      inputs.forEach((input, index) => {
+        input.value = '';
+        input.addEventListener('input', (e) => {
+          if (e.target.value.length === 1) {
+            if (index < inputs.length - 1) {
+              inputs[index + 1].focus();
+            } else {
+              handlePinSubmit(new Event('submit'));
+            }
+          }
+        });
+
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Backspace' && !e.target.value && index > 0) {
+            inputs[index - 1].focus();
+          }
+        });
+
+        input.addEventListener('paste', (e) => {
+          e.preventDefault();
+          const pasteData = (e.clipboardData || window.clipboardData).getData('text').trim();
+          if (/^\d{4}$/.test(pasteData)) {
+            pasteData.split('').forEach((char, i) => {
+              if (inputs[i]) inputs[i].value = char;
+            });
+            handlePinSubmit(new Event('submit'));
+          }
+        });
+      });
+
+      if (inputs.length > 0) {
+        setTimeout(() => inputs[0].focus(), 150);
+      }
+    }
+
+    function handlePinSubmit(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      const inputs = document.querySelectorAll('.pin-digit');
+      let enteredPin = '';
+      inputs.forEach(input => enteredPin += input.value);
+
+      const errorMsg = document.getElementById('pinErrorMsg');
+
+      if (enteredPin === CORRECT_PIN) {
+        if (errorMsg) errorMsg.classList.add('hidden');
+        sessionStorage.setItem(AUTH_STORAGE_KEY, 'true');
+        const overlay = document.getElementById('pinAuthOverlay');
+        const mainContent = document.querySelector('main');
+        const header = document.querySelector('header');
+        const footer = document.querySelector('footer');
+
+        if (overlay) overlay.classList.add('hidden');
+        if (mainContent) mainContent.classList.remove('blur-sm', 'pointer-events-none');
+        if (header) header.classList.remove('blur-sm', 'pointer-events-none');
+        if (footer) footer.classList.remove('blur-sm', 'pointer-events-none');
+
+        loadDashboardData();
+      } else {
+        if (errorMsg) {
+          errorMsg.classList.remove('hidden');
+          errorMsg.innerText = "Incorrect PIN. Please enter '0143'.";
+        }
+        inputs.forEach(input => {
+          input.value = '';
+          input.classList.add('border-rose-500');
+          setTimeout(() => input.classList.remove('border-rose-500'), 1000);
+        });
+        if (inputs.length > 0) inputs[0].focus();
+      }
+    }
+
+    function logoutDashboard() {
+      sessionStorage.removeItem(AUTH_STORAGE_KEY);
+      checkAuthStatus();
+    }
+
+    document.addEventListener('DOMContentLoaded', checkAuthStatus);
   </script>
 </body>
 </html>
