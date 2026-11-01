@@ -419,10 +419,10 @@
           <p class="text-xs text-slate-400 mt-1">Fetch and analyze client holdings directly from official CAMS / KFintech CAS statements or enter portfolio details.</p>
         </div>
 
-        <!-- Action Buttons (Strictly Real Client Data) -->
+        <!-- Action Buttons: Amit Demo + Clear Holdings -->
         <div class="flex items-center gap-2">
-          <button onclick="togglePasteArea()" class="px-3.5 py-2 text-xs font-semibold rounded-xl bg-slate-900 hover:bg-slate-800 text-blue-400 border border-slate-700 transition flex items-center gap-1.5">
-            📋 Paste CAS Text / Statement
+          <button onclick="loadAmitDemoPortfolio()" class="px-3.5 py-2 text-xs font-semibold rounded-xl bg-slate-900 hover:bg-slate-800 text-blue-400 border border-slate-700 transition flex items-center gap-1.5">
+            📂 Load Amit Demo Portfolio
           </button>
           <button onclick="clearClientHoldings()" class="px-3.5 py-2 text-xs font-semibold rounded-xl bg-slate-900 hover:bg-slate-800 text-rose-400 border border-slate-800 transition flex items-center gap-1.5">
             🗑️ Clear Holdings
@@ -432,11 +432,7 @@
 
       
       <!-- Collapsible Direct Paste Drawer -->
-      <div id="pasteCasContainer" class="hidden p-5 rounded-2xl bg-slate-900 border border-blue-500/30 space-y-3">
-        <div class="flex justify-between items-center">
-          <span class="text-xs font-bold text-white uppercase tracking-wider">Paste CAMS / KFintech Statement Text</span>
-          <button onclick="togglePasteArea()" class="text-slate-400 hover:text-white text-xs">✕ Close</button>
-        </div>
+      
         <textarea id="casPastedText" rows="6" placeholder="Paste full text or summary table copied from your CAMS CAS PDF, eCAS email, or portal..." class="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 font-mono focus:outline-none focus:border-blue-500"></textarea>
         <button onclick="parsePastedCasText()" class="py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition">
           Extract & Analyze Holdings
@@ -1169,19 +1165,22 @@
       runPortfolioHealthDiagnostic();
     }
 
-    // --- D. Real CAMS / KFintech CAS Parser & Holdings Manager (No Demo Fallbacks) ---
-    function togglePasteArea() {
-      const container = document.getElementById('pasteCasContainer');
-      if (container) container.classList.toggle('hidden');
-    }
-
-    function parsePastedCasText() {
-      const text = document.getElementById('casPastedText').value;
-      if (!text || text.trim().length < 20) {
-        alert("Please paste statement content.");
-        return;
-      }
-      processCasText(text, "Pasted Statement");
+    // --- D. Real CAMS / KFintech CAS Parser & Demo Manager ---
+    
+    // Amit Sharma Demo Portfolio Loader
+    function loadAmitDemoPortfolio() {
+      clientHoldings = [
+        { name: "HDFC Top 100 Fund - Growth", category: "Large Cap", type: "Equity", value: 180000 },
+        { name: "Parag Parikh Flexi Cap Fund - Growth", category: "Flexi Cap", type: "Equity", value: 240000 },
+        { name: "Nippon India Small Cap Fund - Growth", category: "Small Cap", type: "Equity", value: 160000 },
+        { name: "Kotak Equity Arbitrage Fund - Growth", category: "Arbitrage", type: "Debt", value: 80000 },
+        { name: "HDFC Corporate Bond Fund - Growth", category: "Corporate Bond", type: "Debt", value: 140000 }
+      ];
+      document.getElementById('clientNameInput').value = "Amit Sharma";
+      const statusEl = document.getElementById('casStatusText');
+      if (statusEl) statusEl.innerHTML = '<span class="text-blue-400 font-semibold">✓ Loaded Amit Sharma demo portfolio (5 funds | ₹8,00,000).</span>';
+      renderClientHoldingsTable();
+      runPortfolioHealthDiagnostic();
     }
 
     function clearClientHoldings() {
@@ -1189,7 +1188,7 @@
       const fileInp = document.getElementById('casFileInput');
       if (fileInp) fileInp.value = '';
       const statusEl = document.getElementById('casStatusText');
-      if (statusEl) statusEl.innerText = "Holdings cleared. Upload CAS or proceed to Model Allocation.";
+      if (statusEl) statusEl.innerText = "Holdings cleared. Upload client CAS or click 'Load Amit Demo Portfolio'.";
       renderClientHoldingsTable();
       runPortfolioHealthDiagnostic();
     }
@@ -1224,7 +1223,7 @@
       tbody.innerHTML = '';
 
       if (clientHoldings.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-500">No client portfolio loaded. Upload your CAMS/KFintech CAS (PDF/Excel) or proceed directly with fresh model allocation.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-500">No client portfolio loaded. Upload your CAMS/KFintech CAS (PDF/Excel) or click "Load Amit Demo Portfolio".</td></tr>';
         document.getElementById('totalClientVal').innerText = "₹0";
         document.getElementById('totalClientSchemes').innerText = "0";
         document.getElementById('clientEquityPct').innerText = "0%";
@@ -1267,7 +1266,46 @@
       document.getElementById('clientDebtPct').innerText = debtPct + '%';
     }
 
-    // 1. Unified Multi-Format CAMS / KFintech Upload Handler
+    // Precision Scheme Name Extractor
+    function extractCleanSchemeName(rawText) {
+      if (!rawText) return null;
+      
+      // Reject summary lines immediately
+      if (/^(?:Total\s+Purchase|Total\s+Redemption|Total\s+Valuation|Total\s+Cost|Closing\s+Balance|Balance\s+Units|Date\s+Transaction|Summary\s+of|Consolidated|Folio\s+No|Investor\s+Name|Registrar)\b/i.test(rawText.trim())) {
+        return null;
+      }
+
+      // AMC Identification Pattern
+      const amcPattern = /(?:HDFC|ICICI\s+Prudential|ICICI|SBI|Nippon\s+India|Nippon|Kotak|Axis|Parag\s+Parikh|PPFAS|Mirae\s+Asset|Mirae|UTI|Motilal\s+Oswal|Motilal|Bandhan|IDFC|Tata|Aditya\s+Birla\s+Sun\s+Life|Aditya\s+Birla|ABSL|Canara\s+Robeco|Canara|DSP|Franklin\s+Templeton|Franklin|Invesco|Sundaram|HSBC|Quant|Edelweiss|Mahindra\s+Manulife|PGIM\s+India|PGIM|WhiteOak\s+Capital|WhiteOak|Baroda\s+BNP\s+Paribas|Baroda|Groww|Navi|Taurus|JM\s+Financial|Union)/i;
+
+      const amcMatch = rawText.match(amcPattern);
+      if (!amcMatch) return null;
+
+      // Extract text starting from the AMC name forward
+      let schemePart = rawText.slice(amcMatch.index);
+
+      // Truncate at trailing metadata/transaction keywords
+      const cutoffRegex = /\b(?:ISIN|Folio|Closing|Balance|Units?|NAV|Price|Valuation|Market\s+Value|Current\s+Value|Total|Purchase|Redemption|SIP|STP|SWP|Switch|Advisor|ARN|Registrar|PAN)\b|[|,;:]/i;
+      schemePart = schemePart.split(cutoffRegex)[0].trim();
+
+      // Clean up punctuation and dashes
+      schemePart = schemePart.replace(/[\s\-–:/|]+$/, '').trim();
+
+      // Filter out generic AMC headers (e.g. "HDFC Mutual Fund", "SBI Mutual Fund")
+      if (/\bMutual\s+Fund\b/i.test(schemePart) && !/\b(?:Growth|Direct|Regular|Option|Plan|Flexi|Mid|Small|Large|Top|Focused|Balanced|Advantage|Opportunities|Bluechip|All\s+Seasons|Corporate|Banking|PSU|Arbitrage|Liquid|Index|ETF|Saver|Emerging|Value)\b/i.test(schemePart)) {
+        return null;
+      }
+
+      // Check for mutual fund keywords
+      const fundKeywords = /\b(?:Fund|Growth|Plan|Option|Index|ETF|Cap|Equity|Debt|Balanced|Saver|Bluechip|Opportunities|Bond|Liquid|Arbitrage|Tax|Advantage)\b/i;
+      if (!fundKeywords.test(schemePart) || schemePart.length < 10) {
+        return null;
+      }
+
+      return schemePart;
+    }
+
+    // Unified Multi-Format CAMS / KFintech Upload Handler
     async function handleCasFileUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
@@ -1275,7 +1313,6 @@
       const statusEl = document.getElementById('casStatusText');
       statusEl.innerText = `Reading ${file.name}...`;
 
-      // A. Handle PDF Statements (CAMS / KFintech Detailed or eCAS)
       if (file.name.toLowerCase().endsWith('.pdf')) {
         const password = document.getElementById('casPasswordInput').value.trim();
         const reader = new FileReader();
@@ -1303,12 +1340,11 @@
             }
 
             let fullText = "";
-            // Reconstruct genuine lines using Y-coordinates (top to bottom)
             for (let i = 1; i <= pdfDoc.numPages; i++) {
               const page = await pdfDoc.getPage(i);
               const textContent = await page.getTextContent();
               
-              // Sort items: top-to-bottom (Y descending), left-to-right (X ascending)
+              // Sort text items top-to-bottom (Y descending), left-to-right (X ascending)
               const items = textContent.items.map(it => ({
                 str: it.str,
                 x: it.transform[4],
@@ -1319,29 +1355,24 @@
               let lineTokens = [];
               for (const it of items) {
                 if (currY === null || Math.abs(it.y - currY) > 3.5) {
-                  if (lineTokens.length > 0) {
-                    fullText += "\n" + lineTokens.join(" ").trim();
-                  }
+                  if (lineTokens.length > 0) fullText += "\n" + lineTokens.join(" ").trim();
                   lineTokens = [it.str];
                   currY = it.y;
                 } else {
                   lineTokens.push(it.str);
                 }
               }
-              if (lineTokens.length > 0) {
-                fullText += "\n" + lineTokens.join(" ").trim();
-              }
+              if (lineTokens.length > 0) fullText += "\n" + lineTokens.join(" ").trim();
             }
 
             processCasText(fullText, file.name);
           } catch (err) {
             console.error("PDF Parsing Error:", err);
-            statusEl.innerHTML = `<span class="text-rose-400 font-semibold">Could not parse PDF. Check password, or use 'Paste CAS Text / Statement'.</span>`;
+            statusEl.innerHTML = `<span class="text-rose-400 font-semibold">Could not parse PDF. Check password or use manual entry.</span>`;
           }
         };
         reader.readAsArrayBuffer(file);
       } 
-      // B. Handle Excel (.xlsx, .xls) and CSV Statements
       else if (file.name.match(/\.(xlsx|xls|csv)$/i)) {
         const reader = new FileReader();
         reader.onload = function(e) {
@@ -1359,7 +1390,7 @@
             processCasText(combinedText, file.name);
           } catch (err) {
             console.error("Excel Parsing Error:", err);
-            statusEl.innerHTML = `<span class="text-rose-400 font-semibold">Error reading Excel file. Check format or use 'Paste CAS Text / Statement'.</span>`;
+            statusEl.innerHTML = `<span class="text-rose-400 font-semibold">Error reading Excel file. Check file format.</span>`;
           }
         };
         reader.readAsArrayBuffer(file);
@@ -1368,54 +1399,11 @@
       }
     }
 
-    // 2. Fund Scheme Sanitizer & Accurate Valuation Engine
-    function sanitizeSchemeName(rawLine) {
-      if (!rawLine) return null;
-      
-      // Reject summary and non-scheme lines immediately
-      if (/^(?:Total\s+Purchase|Total\s+Redemption|Total\s+Valuation|Total\s+Cost|Closing\s+Balance|Balance\s+Units|Date\s+Transaction|Summary\s+of|Consolidated|Folio\s+No|Investor\s+Name)\b/i.test(rawLine)) {
-        return null;
-      }
-
-      // Remove prefixes like "Scheme Name:" or "Scheme :"
-      let cleaned = rawLine.replace(/^(?:Scheme\s*(?:Name)?|Fund\s*(?:Name)?)\s*[:\-]?\s*/i, '').trim();
-
-      // Transaction and noise word cutoffs
-      const cutoffs = [
-        /\b(?:Total\s+Purchase|Purchase|Redemption|SIP|STP|SWP|Switch\s+In|Switch\s+Out)\b.*/i,
-        /\b(?:Closing\s+Units?|Closing\s+Balance|Balance\s+Units?|Units?\s+as\s+on)\b.*/i,
-        /\b(?:ISIN|Folio|Advisor|ARN|Stamp\s+Duty|STT|Gross\s+Amount|Net\s+Amount|Total\s+Cost)\b.*/i,
-        /\b(?:Valuation|Current\s+Value|Market\s+Value)\b.*/i,
-        /\b(?:NAV\s+on|NAV\s+as\s+on|Price\s+as\s+on)\b.*/i
-      ];
-
-      for (const pattern of cutoffs) {
-        cleaned = cleaned.split(pattern)[0].trim();
-      }
-
-      // Remove trailing punctuation or dashes
-      cleaned = cleaned.replace(/[\s\-–:/|,;]+$/, '').trim();
-
-      // Filter generic AMC headers (e.g. "HDFC Mutual Fund", "Parag Parikh Mutual Fund")
-      if (/\bMutual\s+Fund\b/i.test(cleaned) && !/\b(?:Growth|Direct|Regular|Option|Plan|Flexi|Mid|Small|Large|Top|Focused|Balanced|Advantage|Opportunities|Bluechip|All\s+Seasons|Corporate|Banking|PSU|Arbitrage|Liquid|Index|ETF|Saver|Emerging|Value)\b/i.test(cleaned)) {
-        return null;
-      }
-
-      // Verify legitimate fund format
-      const amcRegex = /(?:HDFC|ICICI|SBI|Nippon|Kotak|Axis|Parag\s+Parikh|Mirae|UTI|Motilal|Bandhan|Tata|Aditya\s+Birla|Canara|DSP|Franklin|Invesco|Sundaram|HSBC|Quant|Edelweiss|Mahindra|PGIM|WhiteOak|Baroda|Groww|Navi|Taurus)/i;
-      const fundWordRegex = /\b(?:Fund|Growth|Plan|Option|ETF|Index|Direct|Regular|IDCW|Dividend|Balanced|Equity|Cap)\b/i;
-
-      if (!amcRegex.test(cleaned) || !fundWordRegex.test(cleaned) || cleaned.length < 10) {
-        return null;
-      }
-
-      return cleaned;
-    }
-
+    // Core Statement Parser
     function processCasText(rawText, sourceName) {
       const statusEl = document.getElementById('casStatusText');
 
-      // Extract Real Investor Name
+      // Extract Investor Name
       const nameMatch = rawText.match(/(?:Investor\s*Name|Name\s*of\s*Investor|Client\s*Name|Holder\s*Name|Dear\s+Mr\.|Dear\s+Ms\.|Dear\s+Mrs\.)\s*[:\-]?\s*([A-Za-z\s\.]{3,35})/i);
       if (nameMatch && nameMatch[1]) {
         const detectedName = nameMatch[1].split('\n')[0].replace(/PAN.*/i, '').trim();
@@ -1431,9 +1419,9 @@
 
       // Step 1: Detect clean scheme positions
       for (let i = 0; i < lines.length; i++) {
-        const cleanName = sanitizeSchemeName(lines[i]);
+        const cleanName = extractCleanSchemeName(lines[i]);
         if (cleanName && !seenSchemes.has(cleanName.toUpperCase())) {
-          schemePositions.push({ lineIndex: i, name: cleanName });
+          schemePositions.push({ lineIndex: i, name: cleanName, lineText: lines[i] });
           seenSchemes.add(cleanName.toUpperCase());
         }
       }
@@ -1445,38 +1433,46 @@
         const sectionLines = lines.slice(currentPos.lineIndex, nextPosIndex);
 
         let val = 0;
-        let units = 0;
-        let nav = 0;
 
-        for (const secLine of sectionLines) {
-          // Ignore cost and purchase ledger figures
-          if (!/Total\s+Purchase|Total\s+Cost|Purchase\s+Price/i.test(secLine)) {
-            const valMatch = secLine.match(/(?:Valuation|Current\s*Value|Market\s*Value)\s*(?:\([^\)]*\))?\s*(?:on\s+[^:]+)?\s*[:\-]?\s*(?:INR|Rs\.?)?\s*([\d,]+(?:\.\d{1,2})?)/i);
+        // Check if value exists on the same line (table row)
+        const sameLineNums = currentPos.lineText.match(/[\d,]+\.\d{2}/g);
+        if (sameLineNums) {
+          for (let k = sameLineNums.length - 1; k >= 0; k--) {
+            const cand = parseFloat(sameLineNums[k].replace(/,/g, ''));
+            if (cand >= 500) {
+              val = cand;
+              break;
+            }
+          }
+        }
+
+        // Search subsequent section lines for explicit valuation
+        if (val === 0) {
+          for (const secLine of sectionLines) {
+            if (/Total\s+Purchase|Total\s+Cost|Purchase\s+Price|Amount\s+Invested/i.test(secLine)) continue;
+
+            const valMatch = secLine.match(/(?:Valuation|Current\s*Value|Market\s*Value|Total\s*Amount)\s*(?:\([^\)]*\))?\s*(?:on\s+[^:]+)?\s*[:\-]?\s*(?:INR|Rs\.?)?\s*([\d,]+(?:\.\d{1,2})?)/i);
             if (valMatch) {
               const candVal = parseFloat(valMatch[1].replace(/,/g, ''));
-              if (candVal > 100) {
+              if (candVal >= 100) {
                 val = candVal;
                 break;
               }
             }
           }
-
-          // Units fallback
-          const unitsMatch = secLine.match(/(?:Closing\s*Unit\s*Balance|Closing\s*Balance|Balance\s*Units?)\s*[:\-]?\s*([\d,]+\.?\d*)/i);
-          if (unitsMatch) {
-            units = parseFloat(unitsMatch[1].replace(/,/g, '')) || 0;
-          }
-
-          // NAV fallback
-          const navMatch = secLine.match(/(?:NAV|Price)\s*(?:on\s+[^:]+)?\s*[:\-]?\s*(?:INR|Rs\.?)?\s*([\d,]+\.?\d*)/i);
-          if (navMatch) {
-            nav = parseFloat(navMatch[1].replace(/,/g, '')) || 0;
-          }
         }
 
-        // If explicit valuation line wasn't found, calculate Units * NAV
-        if (val === 0 && units > 0 && nav > 0) {
-          val = Math.round(units * nav);
+        // Units * NAV fallback
+        if (val === 0) {
+          let units = 0, nav = 0;
+          for (const secLine of sectionLines) {
+            const unitsMatch = secLine.match(/(?:Closing\s*Unit\s*Balance|Closing\s*Balance|Balance\s*Units?)\s*[:\-]?\s*([\d,]+\.?\d*)/i);
+            if (unitsMatch) units = parseFloat(unitsMatch[1].replace(/,/g, '')) || 0;
+
+            const navMatch = secLine.match(/(?:NAV|Price)\s*(?:on\s+[^:]+)?\s*[:\-]?\s*(?:INR|Rs\.?)?\s*([\d,]+\.?\d*)/i);
+            if (navMatch) nav = parseFloat(navMatch[1].replace(/,/g, '')) || 0;
+          }
+          if (units > 0 && nav > 0) val = Math.round(units * nav);
         }
 
         const isDebt = /Bond|Debt|Liquid|Arbitrage|Overnight|Cash|PSU|Gilt|Treasury|Credit|Savings|Ultra\s*Short/i.test(currentPos.name);
@@ -1490,14 +1486,14 @@
         });
       }
 
-      // Step 3: Populate genuine holdings (no demo fallbacks)
+      // Step 3: Populate genuine holdings
       if (parsedHoldings.length > 0) {
         clientHoldings = parsedHoldings;
         statusEl.innerHTML = `<span class="text-emerald-400 font-bold">✓ Successfully extracted ${parsedHoldings.length} authentic mutual fund holdings from ${sourceName}.</span>`;
         renderClientHoldingsTable();
         runPortfolioHealthDiagnostic();
       } else {
-        statusEl.innerHTML = `<span class="text-amber-400 font-semibold">⚠️ Could not detect scheme valuations from file. Please use 'Paste CAS Text / Statement' or add schemes manually below.</span>`;
+        statusEl.innerHTML = `<span class="text-amber-400 font-semibold">⚠️ Could not detect scheme valuations from file. Please use manual entry or load Amit demo portfolio.</span>`;
       }
     }
 
