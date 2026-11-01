@@ -1275,7 +1275,7 @@
       const statusEl = document.getElementById('casStatusText');
       statusEl.innerText = `Reading ${file.name}...`;
 
-      // A. Handle PDF Statements
+      // A. Handle PDF Statements (CAMS / KFintech Detailed or eCAS)
       if (file.name.toLowerCase().endsWith('.pdf')) {
         const password = document.getElementById('casPasswordInput').value.trim();
         const reader = new FileReader();
@@ -1303,17 +1303,40 @@
             }
 
             let fullText = "";
+            // Reconstruct genuine lines using Y-coordinates (top to bottom)
             for (let i = 1; i <= pdfDoc.numPages; i++) {
               const page = await pdfDoc.getPage(i);
               const textContent = await page.getTextContent();
-              const pageText = textContent.items.map(item => item.str).join(" ");
-              fullText += "\n" + pageText;
+              
+              // Sort items: top-to-bottom (Y descending), left-to-right (X ascending)
+              const items = textContent.items.map(it => ({
+                str: it.str,
+                x: it.transform[4],
+                y: it.transform[5]
+              })).sort((a, b) => (b.y - a.y) || (a.x - b.x));
+
+              let currY = null;
+              let lineTokens = [];
+              for (const it of items) {
+                if (currY === null || Math.abs(it.y - currY) > 3.5) {
+                  if (lineTokens.length > 0) {
+                    fullText += "\n" + lineTokens.join(" ").trim();
+                  }
+                  lineTokens = [it.str];
+                  currY = it.y;
+                } else {
+                  lineTokens.push(it.str);
+                }
+              }
+              if (lineTokens.length > 0) {
+                fullText += "\n" + lineTokens.join(" ").trim();
+              }
             }
 
             processCasText(fullText, file.name);
           } catch (err) {
             console.error("PDF Parsing Error:", err);
-            statusEl.innerHTML = `<span class="text-rose-400 font-semibold">Could not parse PDF. Check password, or paste text using 'Paste CAS Text / Statement'.</span>`;
+            statusEl.innerHTML = `<span class="text-rose-400 font-semibold">Could not parse PDF. Check password, or use 'Paste CAS Text / Statement'.</span>`;
           }
         };
         reader.readAsArrayBuffer(file);
@@ -1345,7 +1368,50 @@
       }
     }
 
-    // 2. Core Text Extraction & Valuation Parser
+    // 2. Fund Scheme Sanitizer & Accurate Valuation Engine
+    function sanitizeSchemeName(rawLine) {
+      if (!rawLine) return null;
+      
+      // Reject summary and non-scheme lines immediately
+      if (/^(?:Total\s+Purchase|Total\s+Redemption|Total\s+Valuation|Total\s+Cost|Closing\s+Balance|Balance\s+Units|Date\s+Transaction|Summary\s+of|Consolidated|Folio\s+No|Investor\s+Name)\b/i.test(rawLine)) {
+        return null;
+      }
+
+      // Remove prefixes like "Scheme Name:" or "Scheme :"
+      let cleaned = rawLine.replace(/^(?:Scheme\s*(?:Name)?|Fund\s*(?:Name)?)\s*[:\-]?\s*/i, '').trim();
+
+      // Transaction and noise word cutoffs
+      const cutoffs = [
+        /\b(?:Total\s+Purchase|Purchase|Redemption|SIP|STP|SWP|Switch\s+In|Switch\s+Out)\b.*/i,
+        /\b(?:Closing\s+Units?|Closing\s+Balance|Balance\s+Units?|Units?\s+as\s+on)\b.*/i,
+        /\b(?:ISIN|Folio|Advisor|ARN|Stamp\s+Duty|STT|Gross\s+Amount|Net\s+Amount|Total\s+Cost)\b.*/i,
+        /\b(?:Valuation|Current\s+Value|Market\s+Value)\b.*/i,
+        /\b(?:NAV\s+on|NAV\s+as\s+on|Price\s+as\s+on)\b.*/i
+      ];
+
+      for (const pattern of cutoffs) {
+        cleaned = cleaned.split(pattern)[0].trim();
+      }
+
+      // Remove trailing punctuation or dashes
+      cleaned = cleaned.replace(/[\s\-–:/|,;]+$/, '').trim();
+
+      // Filter generic AMC headers (e.g. "HDFC Mutual Fund", "Parag Parikh Mutual Fund")
+      if (/\bMutual\s+Fund\b/i.test(cleaned) && !/\b(?:Growth|Direct|Regular|Option|Plan|Flexi|Mid|Small|Large|Top|Focused|Balanced|Advantage|Opportunities|Bluechip|All\s+Seasons|Corporate|Banking|PSU|Arbitrage|Liquid|Index|ETF|Saver|Emerging|Value)\b/i.test(cleaned)) {
+        return null;
+      }
+
+      // Verify legitimate fund format
+      const amcRegex = /(?:HDFC|ICICI|SBI|Nippon|Kotak|Axis|Parag\s+Parikh|Mirae|UTI|Motilal|Bandhan|Tata|Aditya\s+Birla|Canara|DSP|Franklin|Invesco|Sundaram|HSBC|Quant|Edelweiss|Mahindra|PGIM|WhiteOak|Baroda|Groww|Navi|Taurus)/i;
+      const fundWordRegex = /\b(?:Fund|Growth|Plan|Option|ETF|Index|Direct|Regular|IDCW|Dividend|Balanced|Equity|Cap)\b/i;
+
+      if (!amcRegex.test(cleaned) || !fundWordRegex.test(cleaned) || cleaned.length < 10) {
+        return null;
+      }
+
+      return cleaned;
+    }
+
     function processCasText(rawText, sourceName) {
       const statusEl = document.getElementById('casStatusText');
 
@@ -1358,80 +1424,76 @@
         }
       }
 
-      const amcList = [
-        "HDFC", "ICICI Prudential", "ICICI", "SBI", "Nippon India", "Nippon", "Kotak", "Axis",
-        "Parag Parikh", "Mirae Asset", "Mirae", "UTI", "Motilal Oswal", "Motilal", "Bandhan",
-        "Tata", "Aditya Birla Sun Life", "Aditya Birla", "Canara Robeco", "Canara", "DSP",
-        "Franklin Templeton", "Franklin", "Invesco", "Sundaram", "HSBC", "Quant", "Edelweiss",
-        "Mahindra Manulife", "PGIM India", "WhiteOak", "Baroda BNP", "Groww", "Navi", "Taurus"
-      ];
-
       const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
       const parsedHoldings = [];
       const seenSchemes = new Set();
+      const schemePositions = [];
 
+      // Step 1: Detect clean scheme positions
       for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
-
-        // Method A: Table Parsing (pipe or comma-delimited summary rows)
-        if (line.includes('|') || line.includes(',')) {
-          const parts = line.split(/[|,]/).map(p => p.trim());
-          if (parts.length >= 3) {
-            for (let col = 0; col < parts.length; col++) {
-              const candidate = parts[col];
-              const hasAmc = amcList.some(a => candidate.toLowerCase().includes(a.toLowerCase()));
-              const hasFundWord = /Fund|Growth|Plan|Option|ETF|Index/i.test(candidate);
-
-              if (hasAmc && hasFundWord && candidate.length > 10 && !candidate.toLowerCase().includes("mutual fund")) {
-                let val = 0;
-                for (let vCol = col + 1; vCol < parts.length; vCol++) {
-                  const numStr = parts[vCol].replace(/INR|Rs\.?|,/gi, '').trim();
-                  const num = parseFloat(numStr);
-                  if (!isNaN(num) && num > 500) {
-                    val = num;
-                  }
-                }
-
-                if (val > 0 && !seenSchemes.has(candidate)) {
-                  seenSchemes.add(candidate);
-                  const isDebt = /Bond|Debt|Liquid|Arbitrage|Overnight|Cash|PSU|Gilt|Treasury|Credit|Savings|Ultra\s*Short/i.test(candidate);
-                  const cat = isDebt ? "Debt" : /Small/i.test(candidate) ? "Small Cap" : /Mid/i.test(candidate) ? "Mid Cap" : /Large|Top 100|Frontline/i.test(candidate) ? "Large Cap" : "Flexi Cap";
-                  parsedHoldings.push({ name: candidate, category: cat, type: isDebt ? "Debt" : "Equity", value: Math.round(val) });
-                }
-              }
-            }
-          }
-        }
-
-        // Method B: Detailed Statement Block Parsing
-        const matchedAmc = amcList.find(a => line.toUpperCase().startsWith(a.toUpperCase()));
-        if (matchedAmc && /Fund|Growth|Plan|Option/i.test(line) && !line.match(/^[\w\s]+Mutual\s+Fund$/i)) {
-          const cleanScheme = line.split(/ISIN|Folio|Closing/i)[0].trim();
-          if (cleanScheme.length > 12 && !seenSchemes.has(cleanScheme)) {
-            let val = 0;
-            for (let j = i + 1; j < Math.min(i + 12, lines.length); j++) {
-              const ahead = lines[j];
-              const valMatch = ahead.match(/(?:Valuation|Current\s*Value|Market\s*Value|Total\s*Value)\s*(?:\([^\)]*\))?\s*[:\-]?\s*(?:INR|Rs\.?)?\s*([\d,]+(?:\.\d{1,2})?)/i);
-              if (valMatch) {
-                val = parseFloat(valMatch[1].replace(/,/g, ''));
-                break;
-              }
-            }
-
-            if (val > 100) {
-              seenSchemes.add(cleanScheme);
-              const isDebt = /Bond|Debt|Liquid|Arbitrage|Overnight|Cash|PSU|Gilt|Treasury|Credit|Savings|Ultra\s*Short/i.test(cleanScheme);
-              const cat = isDebt ? "Debt" : /Small/i.test(cleanScheme) ? "Small Cap" : /Mid/i.test(cleanScheme) ? "Mid Cap" : /Large|Top 100|Frontline/i.test(cleanScheme) ? "Large Cap" : "Flexi Cap";
-              parsedHoldings.push({ name: cleanScheme, category: cat, type: isDebt ? "Debt" : "Equity", value: Math.round(val) });
-            }
-          }
+        const cleanName = sanitizeSchemeName(lines[i]);
+        if (cleanName && !seenSchemes.has(cleanName.toUpperCase())) {
+          schemePositions.push({ lineIndex: i, name: cleanName });
+          seenSchemes.add(cleanName.toUpperCase());
         }
       }
 
-      // Update State - Strictly NO Demo Fallback
+      // Step 2: Extract real current valuation for each scheme
+      for (let s = 0; s < schemePositions.length; s++) {
+        const currentPos = schemePositions[s];
+        const nextPosIndex = (s + 1 < schemePositions.length) ? schemePositions[s + 1].lineIndex : lines.length;
+        const sectionLines = lines.slice(currentPos.lineIndex, nextPosIndex);
+
+        let val = 0;
+        let units = 0;
+        let nav = 0;
+
+        for (const secLine of sectionLines) {
+          // Ignore cost and purchase ledger figures
+          if (!/Total\s+Purchase|Total\s+Cost|Purchase\s+Price/i.test(secLine)) {
+            const valMatch = secLine.match(/(?:Valuation|Current\s*Value|Market\s*Value)\s*(?:\([^\)]*\))?\s*(?:on\s+[^:]+)?\s*[:\-]?\s*(?:INR|Rs\.?)?\s*([\d,]+(?:\.\d{1,2})?)/i);
+            if (valMatch) {
+              const candVal = parseFloat(valMatch[1].replace(/,/g, ''));
+              if (candVal > 100) {
+                val = candVal;
+                break;
+              }
+            }
+          }
+
+          // Units fallback
+          const unitsMatch = secLine.match(/(?:Closing\s*Unit\s*Balance|Closing\s*Balance|Balance\s*Units?)\s*[:\-]?\s*([\d,]+\.?\d*)/i);
+          if (unitsMatch) {
+            units = parseFloat(unitsMatch[1].replace(/,/g, '')) || 0;
+          }
+
+          // NAV fallback
+          const navMatch = secLine.match(/(?:NAV|Price)\s*(?:on\s+[^:]+)?\s*[:\-]?\s*(?:INR|Rs\.?)?\s*([\d,]+\.?\d*)/i);
+          if (navMatch) {
+            nav = parseFloat(navMatch[1].replace(/,/g, '')) || 0;
+          }
+        }
+
+        // If explicit valuation line wasn't found, calculate Units * NAV
+        if (val === 0 && units > 0 && nav > 0) {
+          val = Math.round(units * nav);
+        }
+
+        const isDebt = /Bond|Debt|Liquid|Arbitrage|Overnight|Cash|PSU|Gilt|Treasury|Credit|Savings|Ultra\s*Short/i.test(currentPos.name);
+        const cat = isDebt ? "Debt" : (/Small/i.test(currentPos.name) ? "Small Cap" : (/Mid/i.test(currentPos.name) ? "Mid Cap" : (/Large|Top 100|Frontline/i.test(currentPos.name) ? "Large Cap" : "Flexi Cap")));
+
+        parsedHoldings.push({
+          name: currentPos.name,
+          category: cat,
+          type: isDebt ? "Debt" : "Equity",
+          value: Math.round(val)
+        });
+      }
+
+      // Step 3: Populate genuine holdings (no demo fallbacks)
       if (parsedHoldings.length > 0) {
         clientHoldings = parsedHoldings;
-        statusEl.innerHTML = `<span class="text-emerald-400 font-bold">✓ Successfully extracted ${parsedHoldings.length} client mutual fund holdings from ${sourceName}.</span>`;
+        statusEl.innerHTML = `<span class="text-emerald-400 font-bold">✓ Successfully extracted ${parsedHoldings.length} authentic mutual fund holdings from ${sourceName}.</span>`;
         renderClientHoldingsTable();
         runPortfolioHealthDiagnostic();
       } else {
