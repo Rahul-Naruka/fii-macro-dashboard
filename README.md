@@ -1,36 +1,58 @@
-# FII Macro Transmission & Investment Signal Dashboard (2005 – 2026)
+# Naruka Wealth — Institutional Portfolio Advisory & Macro Portal
 
-Full automated version configured for repository: `Rahul-Naruka/fii-macro-dashboard`
+An integrated wealth advisory web application, macro regime engine, and portfolio diagnostic platform built for **Rahul Naruka** (AMFI Registered Mutual Fund Distributor, ARN: **277301**).
 
-- **Live URL**: `https://rahul-naruka.github.io/fii-macro-dashboard/`
-- **Signal JSON Feed**: `https://rahul-naruka.github.io/fii-macro-dashboard/data/latest_signal.json`
-
----
-
-## 🚀 Key Features
-
-1. **7 Core Macro & Valuation Transmission Indicators**:
-   - **US 10-Yr Treasury Yield** (`^TNX`)
-   - **US YoY CPI Inflation (%)**
-   - **US Dollar Index** (`DX-Y.NYB`)
-   - **Brent Crude Oil** (`BZ=F`)
-   - **USD/INR Exchange Rate** (`INR=X`)
-   - **Nifty Forward P/E (x)**
-   - **Nifty EPS Growth (%)**
-2. **Automated Traffic-Light Signal System**:
-   - Evaluates whether macro transmission is **Favourable (Green)**, **Neutral (Yellow)**, or **Unfavourable (Red)**.
-3. **Daily Automated Refresh via GitHub Actions**:
-   - Runs every trading day at 18:30 IST (13:00 UTC) right after market close.
-   - Dual-path sync writes to both `data/` and `docs/data/`.
-   - Built-in cache busting prevents browser and CDN caching.
-4. **Interactive Historical Charts (2005 – 2026)**:
-   - FII vs DII Net Capital Flows.
-   - US 10Y Yield, US YoY CPI Inflation, and Brent Crude Oil.
+- **Brand**: Naruka Wealth
+- **ARN**: 277301
+- **Contact Person**: Rahul Naruka
+- **Phone**: +91 8168391356
+- **Email**: narukawealth@gmail.com
+- **Location**: Rewari, Haryana - 123401
+- **Live Deployment**: `https://rahul-naruka.github.io/fii-macro-dashboard/`
 
 ---
 
-## ⚠️ Disclaimer
+## 🛠️ Key Platform Modules & Tools
 
-This dashboard and repository are strictly for **educational purposes or personal use** by **Rahul Naruka**, AMFI Registered Mutual Fund Distributor (ARN: **277301**, Contact No.: **9017404142**).
+### 1. Security PIN Gateway
+- Client access protected by security PIN (`0143`).
+- Clean error response (`Incorrect PIN`) with zero plaintext code disclosure.
+- Browser `sessionStorage` authentication with manual instant-lock control.
 
-*Mutual fund investments are subject to market risks, read all scheme related documents carefully.*
+### 2. Macro Transmission & FII Inflows Engine (1993 – 2026)
+- Evaluates 7 core indicators daily: US 10Y Yield, US YoY CPI, DXY, Brent Crude, USD/INR, Nifty Forward P/E, and EPS Growth.
+- Color-coded indicator ledger covering all 34 years since FII inception in India.
+- Automated daily market-close refresh via GitHub Actions (`auto_update.yml`).
+
+### 3. Interactive Client Risk Profiler (SEBI / Institutional Rules)
+- Assesses age, investment horizon, drawdown reaction, mutual fund experience, and return expectations.
+- Classifies investors into 4 distinct risk profiles:
+  - **Conservative** (10% - 35% Equity)
+  - **Moderate** (30% - 65% Equity)
+  - **Aggressive** (45% - 80% Equity)
+  - **Very Aggressive** (60% - 95% Equity)
+
+### 4. CAMS / KFintech CAS Statement Analyzer
+- Parses client PDF/Excel Consolidated Account Statements (CAS) directly in the client browser with PDF.js.
+- Classifies detected schemes into asset categories (Equity, Debt, Hybrid, Arbitrage) and computes existing asset allocation.
+
+### 5. Quantitative Portfolio Health Scorecard (Out of 100)
+- Evaluates existing portfolios across 4 core diagnostic pillars:
+  1. **Risk Profile Alignment** (30 Points)
+  2. **Macro Regime Transmission** (25 Points)
+  3. **Scheme Spread & Category Overlap** (25 Points)
+  4. **Fund Quality & Downside Protection** (20 Points)
+- Highlights actionable portfolio gaps and overcrowding warnings.
+
+### 6. Dynamic Rebalanced Model Portfolio (Zfunds / Platform Selection Rules)
+- Curates exact mutual fund schemes with **target allocation percentages (%)** and deployment modes (SIP vs. STP vs. Lump Sum).
+- Selection criteria: 3Y/5Y rolling alpha, downside capture ratio < 85%, and fund manager track record.
+
+### 7. Executive Client Review PDF Exporter
+- One-click PDF download containing investor details, diagnostic scores, allocation variance tables, and distributor sign-off.
+- Features complete ARN registration, contact numbers, and regulatory disclaimers.
+
+---
+
+## ⚠️ Regulatory & Compliance Disclaimer
+This platform and dashboard are strictly for **educational purposes and personal client suitability reviews** by Rahul Naruka, AMFI Registered Mutual Fund Distributor (ARN: 277301). Mutual fund investments are subject to market risks; read all scheme related documents carefully before investing.
