@@ -1266,17 +1266,20 @@
       document.getElementById('clientDebtPct').innerText = debtPct + '%';
     }
 
-    // Precision Scheme Name Extractor
+    // Precision Scheme Name Extractor (Strictly rejects transaction rows and switch lines)
     function extractCleanSchemeName(rawText) {
       if (!rawText) return null;
       
-      // Reject summary lines immediately
-      if (/^(?:Total\s+Purchase|Total\s+Redemption|Total\s+Valuation|Total\s+Cost|Closing\s+Balance|Balance\s+Units|Date\s+Transaction|Summary\s+of|Consolidated|Folio\s+No|Investor\s+Name|Registrar)\b/i.test(rawText.trim())) {
+      // 1. Strictly ignore switch transactions, purchases, redemptions, registrations, and system remarks
+      if (/Switch-In|Switch-Out|Switch\s*In|Switch\s*Out|Lateral\s*Shift|Purchase|Redemption|SIP|STP|SWP|Stamp\s*Duty|STT|Registration|Updated|Cancelled|Terminated|Invalid|merger\s*of|Load\s*Structure|applicable\s*NAV/i.test(rawText)) {
+        return null;
+      }
+      if (/^(?:Total\s+Purchase|Total\s+Redemption|Total\s+Valuation|Total\s+Cost|Closing\s+Balance|Balance\s+Units|Date\s+Amount|Date\s+Transaction|Summary\s+of|Consolidated|Folio\s+No|Investor\s+Name|Registrar|PAN|NAV\s+on|Market\s+Value\s+on)\b/i.test(rawText.trim())) {
         return null;
       }
 
-      // AMC Identification Pattern
-      const amcPattern = /(?:HDFC|ICICI\s+Prudential|ICICI|SBI|Nippon\s+India|Nippon|Kotak|Axis|Parag\s+Parikh|PPFAS|Mirae\s+Asset|Mirae|UTI|Motilal\s+Oswal|Motilal|Bandhan|IDFC|Tata|Aditya\s+Birla\s+Sun\s+Life|Aditya\s+Birla|ABSL|Canara\s+Robeco|Canara|DSP|Franklin\s+Templeton|Franklin|Invesco|Sundaram|HSBC|Quant|Edelweiss|Mahindra\s+Manulife|PGIM\s+India|PGIM|WhiteOak\s+Capital|WhiteOak|Baroda\s+BNP\s+Paribas|Baroda|Groww|Navi|Taurus|JM\s+Financial|Union)/i;
+      // 2. AMC Identification Pattern (Including Bajaj Finserv, ABSL, PPFAS, etc.)
+      const amcPattern = /(?:HDFC|ICICI\s+Prudential|ICICI|SBI|Nippon\s+India|Nippon|Kotak|Axis|Parag\s+Parikh|PPFAS|Mirae\s+Asset|Mirae|UTI|Motilal\s+Oswal|Motilal|Bandhan|IDFC|Tata|Aditya\s+Birla\s+Sun\s+Life|Aditya\s+Birla|ABSL|Canara\s+Robeco|Canara|DSP|Franklin\s+Templeton|Franklin|Invesco|Sundaram|HSBC|Quant|Edelweiss|Mahindra\s+Manulife|PGIM\s+India|PGIM|WhiteOak\s+Capital|WhiteOak|Baroda\s+BNP\s+Paribas|Baroda|Groww|Navi|Taurus|JM\s+Financial|Union|Bajaj\s+Finserv)/i;
 
       const amcMatch = rawText.match(amcPattern);
       if (!amcMatch) return null;
@@ -1289,15 +1292,15 @@
       schemePart = schemePart.split(cutoffRegex)[0].trim();
 
       // Clean up punctuation and dashes
-      schemePart = schemePart.replace(/[\s\-–:/|]+$/, '').trim();
+      schemePart = schemePart.replace(/[\s\-–:/|()]+$/, '').trim();
 
-      // Filter out generic AMC headers (e.g. "HDFC Mutual Fund", "SBI Mutual Fund")
-      if (/\bMutual\s+Fund\b/i.test(schemePart) && !/\b(?:Growth|Direct|Regular|Option|Plan|Flexi|Mid|Small|Large|Top|Focused|Balanced|Advantage|Opportunities|Bluechip|All\s+Seasons|Corporate|Banking|PSU|Arbitrage|Liquid|Index|ETF|Saver|Emerging|Value)\b/i.test(schemePart)) {
+      // Filter out generic AMC headers (e.g. "HDFC Mutual Fund", "SBI Mutual Fund", "Kotak Mutual Fund")
+      if (/\bMutual\s+Fund\b/i.test(schemePart) && !/\b(?:Growth|Direct|Regular|Option|Plan|Flexi|Mid|Small|Large|Top|Focused|Balanced|Advantage|Opportunities|Bluechip|All\s+Seasons|Corporate|Banking|PSU|Arbitrage|Liquid|Index|ETF|Saver|Emerging|Value|Gold)\b/i.test(schemePart)) {
         return null;
       }
 
       // Check for mutual fund keywords
-      const fundKeywords = /\b(?:Fund|Growth|Plan|Option|Index|ETF|Cap|Equity|Debt|Balanced|Saver|Bluechip|Opportunities|Bond|Liquid|Arbitrage|Tax|Advantage)\b/i;
+      const fundKeywords = /\b(?:Fund|Growth|Plan|Option|Index|ETF|Cap|Equity|Debt|Balanced|Saver|Bluechip|Opportunities|Bond|Liquid|Arbitrage|Tax|Advantage|Gold)\b/i;
       if (!fundKeywords.test(schemePart) || schemePart.length < 10) {
         return null;
       }
@@ -1399,8 +1402,7 @@
       }
     }
 
-    // Core Statement Parser
-        // Robust Multi-Tier Market Valuation Extractor
+    // Robust Multi-Tier Market Valuation Extractor (Past Date Digits)
     function extractSchemeValuation(sectionLines, currentLine) {
       // Tier 1: Explicit Valuation / Market Value line in sectionLines
       // Search from bottom to top (closing summary is at the bottom of the folio block)
@@ -1414,7 +1416,7 @@
         const m = line.match(mvPattern);
         if (m) {
           const v = parseFloat(m[1].replace(/,/g, ''));
-          if (v >= 100) return Math.round(v);
+          if (v >= 1.0) return Math.round(v * 100) / 100;
         }
       }
 
@@ -1425,36 +1427,41 @@
           for (let p = parts.length - 1; p >= 0; p--) {
             const cand = parts[p].replace(/INR|Rs\.?|,/gi, '').trim();
             const v = parseFloat(cand);
-            if (!isNaN(v) && v >= 500) return Math.round(v);
+            if (!isNaN(v) && v >= 10.0) return Math.round(v * 100) / 100;
           }
         }
       }
 
       // Tier 3: Compute Units * NAV
       let units = 0, nav = 0;
-      for (const line of sectionLines) {
-        if (!/Purchase|Cost|Redemption/i.test(line)) {
-          const uMatch = line.match(/(?:Closing\s*Unit\s*Balance|Closing\s*Balance|Balance\s*Units?|Total\s*Units?)\s*[:\-]?\s*([\d,]+\.?\d*)/i);
-          if (uMatch) units = parseFloat(uMatch[1].replace(/,/g, '')) || 0;
-
-          const nMatch = line.match(/(?:NAV|Price)\s*(?:on|as\s*on)?\s*[:\-]?\s*(?:INR|Rs\.?)?\s*([\d,]+\.?\d*)/i);
-          if (nMatch) nav = parseFloat(nMatch[1].replace(/,/g, '')) || 0;
+      for (let i = sectionLines.length - 1; i >= 0; i--) {
+        const line = sectionLines[i];
+        if (!/Purchase|Cost|Redemption|Switch/i.test(line)) {
+          if (units === 0) {
+            const uMatch = line.match(/(?:Closing\s*Unit\s*Balance|Closing\s*Balance|Balance\s*Units?|Total\s*Units?)\s*[:\-]?\s*([\d,]+\.?\d*)/i);
+            if (uMatch) units = parseFloat(uMatch[1].replace(/,/g, '')) || 0;
+          }
+          if (nav === 0) {
+            const nMatch = line.match(/(?:NAV|Price)\s*(?:on|as\s*on)?\s*[:\-]?\s*(?:INR|Rs\.?)?\s*([\d,]+\.?\d*)/i);
+            if (nMatch) nav = parseFloat(nMatch[1].replace(/,/g, '')) || 0;
+          }
         }
       }
-      if (units > 0 && nav > 0) return Math.round(units * nav);
+      if (units > 0 && nav > 0) return Math.round(units * nav * 100) / 100;
 
       // Tier 4: Trailing currency numbers on same line
       const nums = currentLine.match(/[\d,]+\.\d{2}/g);
       if (nums) {
         for (let k = nums.length - 1; k >= 0; k--) {
           const v = parseFloat(nums[k].replace(/,/g, ''));
-          if (v >= 500) return Math.round(v);
+          if (v >= 10.0) return Math.round(v * 100) / 100;
         }
       }
 
       return 0;
     }
 
+    // Core Statement Parser
     function processCasText(rawText, sourceName) {
       const statusEl = document.getElementById('casStatusText');
 
@@ -1487,8 +1494,23 @@
         const nextPosIndex = (s + 1 < schemePositions.length) ? schemePositions[s + 1].lineIndex : lines.length;
         const sectionLines = lines.slice(currentPos.lineIndex, nextPosIndex);
 
+        // Check closing units to skip zero balance redeemed folios
+        let closingUnits = 0;
+        for (let l = sectionLines.length - 1; l >= 0; l--) {
+          const uMatch = sectionLines[l].match(/Closing\s*Unit\s*Balance\s*:\s*([\d,]+\.?\d*)/i);
+          if (uMatch) {
+            closingUnits = parseFloat(uMatch[1].replace(/,/g, '')) || 0;
+            break;
+          }
+        }
+
         // Extract genuine closing market valuation
         const val = extractSchemeValuation(sectionLines, currentPos.lineText);
+
+        // Skip folios with 0 balance and 0 value
+        if (closingUnits === 0 && val === 0) {
+          continue;
+        }
 
         const isDebt = /Bond|Debt|Liquid|Arbitrage|Overnight|Cash|PSU|Gilt|Treasury|Credit|Savings|Ultra\s*Short/i.test(currentPos.name);
         const cat = isDebt ? "Debt" : (/Small/i.test(currentPos.name) ? "Small Cap" : (/Mid/i.test(currentPos.name) ? "Mid Cap" : (/Large|Top 100|Frontline/i.test(currentPos.name) ? "Large Cap" : "Flexi Cap")));
@@ -1497,7 +1519,7 @@
           name: currentPos.name,
           category: cat,
           type: isDebt ? "Debt" : "Equity",
-          value: val
+          value: Math.round(val)
         });
       }
 
@@ -1511,7 +1533,6 @@
         statusEl.innerHTML = `<span class="text-amber-400 font-semibold">⚠️ Could not detect scheme valuations from file. Please use manual entry or load Amit demo portfolio.</span>`;
       }
     }
-
     // --- E. Portfolio Diagnostic & 100-Point Scoring Engine ---
     function runPortfolioHealthDiagnostic() {
       if (clientHoldings.length === 0) {
