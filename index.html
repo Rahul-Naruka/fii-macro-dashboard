@@ -1400,6 +1400,61 @@
     }
 
     // Core Statement Parser
+        // Robust Multi-Tier Market Valuation Extractor
+    function extractSchemeValuation(sectionLines, currentLine) {
+      // Tier 1: Explicit Valuation / Market Value line in sectionLines
+      // Search from bottom to top (closing summary is at the bottom of the folio block)
+      const mvPattern = /(?:Valuation|Current\s*Valuation|Market\s*Value|Current\s*Value)\b.*?(?:INR|Rs\.?|:)\s*(?:INR|Rs\.?)?\s*([\d,]+(?:\.\d{1,2})?)/i;
+
+      for (let i = sectionLines.length - 1; i >= 0; i--) {
+        const line = sectionLines[i];
+        if (/Total\s+Purchase|Total\s+Cost|Purchase\s+Price|Amount\s+Invested|Cost\s+Value/i.test(line)) {
+          continue;
+        }
+        const m = line.match(mvPattern);
+        if (m) {
+          const v = parseFloat(m[1].replace(/,/g, ''));
+          if (v >= 100) return Math.round(v);
+        }
+      }
+
+      // Tier 2: Summary Table Rows (Pipe/Tab Delimited)
+      for (const line of sectionLines) {
+        if (line.includes('|') || line.includes('\t')) {
+          const parts = line.split(/[|\t]/);
+          for (let p = parts.length - 1; p >= 0; p--) {
+            const cand = parts[p].replace(/INR|Rs\.?|,/gi, '').trim();
+            const v = parseFloat(cand);
+            if (!isNaN(v) && v >= 500) return Math.round(v);
+          }
+        }
+      }
+
+      // Tier 3: Compute Units * NAV
+      let units = 0, nav = 0;
+      for (const line of sectionLines) {
+        if (!/Purchase|Cost|Redemption/i.test(line)) {
+          const uMatch = line.match(/(?:Closing\s*Unit\s*Balance|Closing\s*Balance|Balance\s*Units?|Total\s*Units?)\s*[:\-]?\s*([\d,]+\.?\d*)/i);
+          if (uMatch) units = parseFloat(uMatch[1].replace(/,/g, '')) || 0;
+
+          const nMatch = line.match(/(?:NAV|Price)\s*(?:on|as\s*on)?\s*[:\-]?\s*(?:INR|Rs\.?)?\s*([\d,]+\.?\d*)/i);
+          if (nMatch) nav = parseFloat(nMatch[1].replace(/,/g, '')) || 0;
+        }
+      }
+      if (units > 0 && nav > 0) return Math.round(units * nav);
+
+      // Tier 4: Trailing currency numbers on same line
+      const nums = currentLine.match(/[\d,]+\.\d{2}/g);
+      if (nums) {
+        for (let k = nums.length - 1; k >= 0; k--) {
+          const v = parseFloat(nums[k].replace(/,/g, ''));
+          if (v >= 500) return Math.round(v);
+        }
+      }
+
+      return 0;
+    }
+
     function processCasText(rawText, sourceName) {
       const statusEl = document.getElementById('casStatusText');
 
@@ -1426,54 +1481,14 @@
         }
       }
 
-      // Step 2: Extract real current valuation for each scheme
+      // Step 2: Extract real current market valuation for each scheme
       for (let s = 0; s < schemePositions.length; s++) {
         const currentPos = schemePositions[s];
         const nextPosIndex = (s + 1 < schemePositions.length) ? schemePositions[s + 1].lineIndex : lines.length;
         const sectionLines = lines.slice(currentPos.lineIndex, nextPosIndex);
 
-        let val = 0;
-
-        // Check if value exists on the same line (table row)
-        const sameLineNums = currentPos.lineText.match(/[\d,]+\.\d{2}/g);
-        if (sameLineNums) {
-          for (let k = sameLineNums.length - 1; k >= 0; k--) {
-            const cand = parseFloat(sameLineNums[k].replace(/,/g, ''));
-            if (cand >= 500) {
-              val = cand;
-              break;
-            }
-          }
-        }
-
-        // Search subsequent section lines for explicit valuation
-        if (val === 0) {
-          for (const secLine of sectionLines) {
-            if (/Total\s+Purchase|Total\s+Cost|Purchase\s+Price|Amount\s+Invested/i.test(secLine)) continue;
-
-            const valMatch = secLine.match(/(?:Valuation|Current\s*Value|Market\s*Value|Total\s*Amount)\s*(?:\([^\)]*\))?\s*(?:on\s+[^:]+)?\s*[:\-]?\s*(?:INR|Rs\.?)?\s*([\d,]+(?:\.\d{1,2})?)/i);
-            if (valMatch) {
-              const candVal = parseFloat(valMatch[1].replace(/,/g, ''));
-              if (candVal >= 100) {
-                val = candVal;
-                break;
-              }
-            }
-          }
-        }
-
-        // Units * NAV fallback
-        if (val === 0) {
-          let units = 0, nav = 0;
-          for (const secLine of sectionLines) {
-            const unitsMatch = secLine.match(/(?:Closing\s*Unit\s*Balance|Closing\s*Balance|Balance\s*Units?)\s*[:\-]?\s*([\d,]+\.?\d*)/i);
-            if (unitsMatch) units = parseFloat(unitsMatch[1].replace(/,/g, '')) || 0;
-
-            const navMatch = secLine.match(/(?:NAV|Price)\s*(?:on\s+[^:]+)?\s*[:\-]?\s*(?:INR|Rs\.?)?\s*([\d,]+\.?\d*)/i);
-            if (navMatch) nav = parseFloat(navMatch[1].replace(/,/g, '')) || 0;
-          }
-          if (units > 0 && nav > 0) val = Math.round(units * nav);
-        }
+        // Extract genuine closing market valuation
+        const val = extractSchemeValuation(sectionLines, currentPos.lineText);
 
         const isDebt = /Bond|Debt|Liquid|Arbitrage|Overnight|Cash|PSU|Gilt|Treasury|Credit|Savings|Ultra\s*Short/i.test(currentPos.name);
         const cat = isDebt ? "Debt" : (/Small/i.test(currentPos.name) ? "Small Cap" : (/Mid/i.test(currentPos.name) ? "Mid Cap" : (/Large|Top 100|Frontline/i.test(currentPos.name) ? "Large Cap" : "Flexi Cap")));
@@ -1482,7 +1497,7 @@
           name: currentPos.name,
           category: cat,
           type: isDebt ? "Debt" : "Equity",
-          value: Math.round(val)
+          value: val
         });
       }
 
