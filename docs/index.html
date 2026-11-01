@@ -18,6 +18,8 @@
     pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
   </script>
 
+    <!-- SheetJS for CAMS Excel / CSV Parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
   
@@ -305,7 +307,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <div>
               <label class="block text-slate-400 mb-1">Investor Full Name</label>
-              <input type="text" id="clientNameInput" placeholder="e.g. Amit Sharma" value="Valued Client" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-blue-500" />
+              <input type="text" id="clientNameInput" placeholder="Enter Investor Name" value="" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-blue-500" />
             </div>
             <div>
               <label class="block text-slate-400 mb-1">Investor Age (Years)</label>
@@ -417,11 +419,28 @@
           <p class="text-xs text-slate-400 mt-1">Fetch and analyze client holdings directly from official CAMS / KFintech CAS statements or enter portfolio details.</p>
         </div>
 
+        <!-- Action Buttons (Strictly Real Client Data) -->
         <div class="flex items-center gap-2">
-          <button onclick="loadSamplePortfolio()" class="px-3.5 py-2 text-xs font-semibold rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-300 border border-slate-700 transition">
-            📂 Load Demo Client Portfolio
+          <button onclick="togglePasteArea()" class="px-3.5 py-2 text-xs font-semibold rounded-xl bg-slate-900 hover:bg-slate-800 text-blue-400 border border-slate-700 transition flex items-center gap-1.5">
+            📋 Paste CAS Text / Statement
+          </button>
+          <button onclick="clearClientHoldings()" class="px-3.5 py-2 text-xs font-semibold rounded-xl bg-slate-900 hover:bg-slate-800 text-rose-400 border border-slate-800 transition flex items-center gap-1.5">
+            🗑️ Clear Holdings
           </button>
         </div>
+      </div>
+
+      
+      <!-- Collapsible Direct Paste Drawer -->
+      <div id="pasteCasContainer" class="hidden p-5 rounded-2xl bg-slate-900 border border-blue-500/30 space-y-3">
+        <div class="flex justify-between items-center">
+          <span class="text-xs font-bold text-white uppercase tracking-wider">Paste CAMS / KFintech Statement Text</span>
+          <button onclick="togglePasteArea()" class="text-slate-400 hover:text-white text-xs">✕ Close</button>
+        </div>
+        <textarea id="casPastedText" rows="6" placeholder="Paste full text or summary table copied from your CAMS CAS PDF, eCAS email, or portal..." class="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 font-mono focus:outline-none focus:border-blue-500"></textarea>
+        <button onclick="parsePastedCasText()" class="py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition">
+          Extract & Analyze Holdings
+        </button>
       </div>
 
       <!-- CAS Fetch & Upload Options -->
@@ -504,7 +523,7 @@
             </thead>
             <tbody id="clientHoldingsBody" class="divide-y divide-slate-800/60 text-slate-300">
               <tr>
-                <td colspan="6" class="py-6 text-center text-slate-500">No client portfolio loaded yet. Upload CAMS CAS or click "Load Demo Client Portfolio".</td>
+                <td colspan="6" class="py-6 text-center text-slate-500">No client portfolio loaded. Upload your CAMS/KFintech CAS (PDF/Excel) or proceed directly with fresh model allocation.</td>
               </tr>
             </tbody>
           </table>
@@ -708,7 +727,7 @@
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs">
           <div>
             <span class="text-slate-400 block text-[10px] uppercase font-bold">Client Name</span>
-            <strong id="rptClientName" class="text-slate-800 text-sm">Amit Sharma</strong>
+            <strong id="rptClientName" class="text-slate-800 text-sm">Valued Investor</strong>
           </div>
           <div>
             <span class="text-slate-400 block text-[10px] uppercase font-bold">Client Age</span>
@@ -1150,17 +1169,27 @@
       runPortfolioHealthDiagnostic();
     }
 
-    // --- D. CAMS CAS Parser & Holdings Manager ---
-    function loadSamplePortfolio() {
-      clientHoldings = [
-        { name: "HDFC Top 100 Fund - Growth", category: "Large Cap", type: "Equity", value: 180000 },
-        { name: "Parag Parikh Flexi Cap Fund", category: "Flexi Cap", type: "Equity", value: 240000 },
-        { name: "Nippon India Small Cap Fund", category: "Small Cap", type: "Equity", value: 160000 },
-        { name: "Kotak Equity Arbitrage Fund", category: "Arbitrage", type: "Debt", value: 80000 },
-        { name: "HDFC Corporate Bond Fund", category: "Corporate Bond", type: "Debt", value: 140000 }
-      ];
-      document.getElementById('clientNameInput').value = "Amit Sharma";
-      document.getElementById('casStatusText').innerText = "Loaded demonstration client portfolio (5 funds).";
+    // --- D. Real CAMS / KFintech CAS Parser & Holdings Manager (No Demo Fallbacks) ---
+    function togglePasteArea() {
+      const container = document.getElementById('pasteCasContainer');
+      if (container) container.classList.toggle('hidden');
+    }
+
+    function parsePastedCasText() {
+      const text = document.getElementById('casPastedText').value;
+      if (!text || text.trim().length < 20) {
+        alert("Please paste statement content.");
+        return;
+      }
+      processCasText(text, "Pasted Statement");
+    }
+
+    function clearClientHoldings() {
+      clientHoldings = [];
+      const fileInp = document.getElementById('casFileInput');
+      if (fileInp) fileInp.value = '';
+      const statusEl = document.getElementById('casStatusText');
+      if (statusEl) statusEl.innerText = "Holdings cleared. Upload CAS or proceed to Model Allocation.";
       renderClientHoldingsTable();
       runPortfolioHealthDiagnostic();
     }
@@ -1195,7 +1224,7 @@
       tbody.innerHTML = '';
 
       if (clientHoldings.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-500">No client portfolio loaded yet. Upload CAMS CAS or click "Load Demo Client Portfolio".</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-500">No client portfolio loaded. Upload your CAMS/KFintech CAS (PDF/Excel) or proceed directly with fresh model allocation.</td></tr>';
         document.getElementById('totalClientVal').innerText = "₹0";
         document.getElementById('totalClientSchemes').innerText = "0";
         document.getElementById('clientEquityPct').innerText = "0%";
@@ -1238,82 +1267,196 @@
       document.getElementById('clientDebtPct').innerText = debtPct + '%';
     }
 
-    // Parse CAMS / KFintech CAS PDF in Browser
+    // 1. Unified Multi-Format CAMS / KFintech Upload Handler
     async function handleCasFileUpload(e) {
       const file = e.target.files[0];
       if (!file) return;
 
       const statusEl = document.getElementById('casStatusText');
-      statusEl.innerText = `Parsing ${file.name}...`;
+      statusEl.innerText = `Reading ${file.name}...`;
 
-      if (file.name.endsWith('.pdf')) {
+      // A. Handle PDF Statements
+      if (file.name.toLowerCase().endsWith('.pdf')) {
         const password = document.getElementById('casPasswordInput').value.trim();
         const reader = new FileReader();
+
         reader.onload = async function() {
           try {
             const typedarray = new Uint8Array(this.result);
-            const loadingTask = pdfjsLib.getDocument({ data: typedarray, password: password });
-            const pdfDoc = await loadingTask.promise;
-            
+            let pdfDoc;
+            try {
+              const loadingTask = pdfjsLib.getDocument({ data: typedarray, password: password });
+              pdfDoc = await loadingTask.promise;
+            } catch (pwErr) {
+              if (pwErr.name === "PasswordException") {
+                const enteredPw = prompt("PDF is password-protected. Enter client PAN (uppercase/lowercase) or password:");
+                if (!enteredPw) {
+                  statusEl.innerText = "Password required to open this CAMS statement.";
+                  return;
+                }
+                document.getElementById('casPasswordInput').value = enteredPw;
+                const retryTask = pdfjsLib.getDocument({ data: typedarray, password: enteredPw });
+                pdfDoc = await retryTask.promise;
+              } else {
+                throw pwErr;
+              }
+            }
+
             let fullText = "";
-            for (let i = 1; i <= Math.min(pdfDoc.numPages, 10); i++) {
+            for (let i = 1; i <= pdfDoc.numPages; i++) {
               const page = await pdfDoc.getPage(i);
               const textContent = await page.getTextContent();
               const pageText = textContent.items.map(item => item.str).join(" ");
-              fullText += " " + pageText;
+              fullText += "\n" + pageText;
             }
 
-            extractMutualFundsFromText(fullText);
-            statusEl.innerText = `Successfully parsed ${pdfDoc.numPages} pages from CAS PDF.`;
+            processCasText(fullText, file.name);
           } catch (err) {
-            console.error(err);
-            statusEl.innerText = "Error reading PDF. If password protected, enter correct password.";
-            alert("Error parsing PDF. Check password if encrypted, or load demo client portfolio.");
+            console.error("PDF Parsing Error:", err);
+            statusEl.innerHTML = `<span class="text-rose-400 font-semibold">Could not parse PDF. Check password, or paste text using 'Paste CAS Text / Statement'.</span>`;
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } 
+      // B. Handle Excel (.xlsx, .xls) and CSV Statements
+      else if (file.name.match(/\.(xlsx|xls|csv)$/i)) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            let combinedText = "";
+
+            workbook.SheetNames.forEach(sheetName => {
+              const worksheet = workbook.Sheets[sheetName];
+              const csv = XLSX.utils.sheet_to_csv(worksheet);
+              combinedText += "\n" + csv;
+            });
+
+            processCasText(combinedText, file.name);
+          } catch (err) {
+            console.error("Excel Parsing Error:", err);
+            statusEl.innerHTML = `<span class="text-rose-400 font-semibold">Error reading Excel file. Check format or use 'Paste CAS Text / Statement'.</span>`;
           }
         };
         reader.readAsArrayBuffer(file);
       } else {
-        // Fallback demo load
-        loadSamplePortfolio();
+        statusEl.innerHTML = `<span class="text-amber-400 font-semibold">Unsupported file format. Please upload PDF, Excel (.xlsx, .xls), or CSV.</span>`;
       }
     }
 
-    function extractMutualFundsFromText(text) {
-      // Basic heuristic regex pattern for Indian mutual fund schemes
-      const schemesFound = [];
-      const keywords = ["HDFC", "ICICI", "SBI", "Nippon", "Kotak", "Axis", "Parag Parikh", "Mirae", "UTI", "Motilal", "Bandhan", "Tata", "Aditya Birla"];
-      
-      keywords.forEach(amc => {
-        const regex = new RegExp(`(${amc}[\w\s\-–]+(Fund|Growth|Plan))`, 'gi');
-        let match;
-        while ((match = regex.exec(text)) !== null && schemesFound.length < 8) {
-          const schemeName = match[1].trim().replace(/\s+/g, ' ');
-          if (schemeName.length > 10 && !schemesFound.some(s => s.name === schemeName)) {
-            const isDebt = /Bond|Debt|Liquid|Arbitrage|Overnight|Cash|PSU/i.test(schemeName);
-            const cat = isDebt ? "Debt" : /Small/i.test(schemeName) ? "Small Cap" : /Mid/i.test(schemeName) ? "Mid Cap" : "Flexi Cap";
-            schemesFound.push({
-              name: schemeName,
-              category: cat,
-              type: isDebt ? "Debt" : "Equity",
-              value: Math.floor(Math.random() * 8 + 2) * 25000
-            });
+    // 2. Core Text Extraction & Valuation Parser
+    function processCasText(rawText, sourceName) {
+      const statusEl = document.getElementById('casStatusText');
+
+      // Extract Real Investor Name
+      const nameMatch = rawText.match(/(?:Investor\s*Name|Name\s*of\s*Investor|Client\s*Name|Holder\s*Name|Dear\s+Mr\.|Dear\s+Ms\.|Dear\s+Mrs\.)\s*[:\-]?\s*([A-Za-z\s\.]{3,35})/i);
+      if (nameMatch && nameMatch[1]) {
+        const detectedName = nameMatch[1].split('\n')[0].replace(/PAN.*/i, '').trim();
+        if (detectedName.length > 3) {
+          document.getElementById('clientNameInput').value = detectedName;
+        }
+      }
+
+      const amcList = [
+        "HDFC", "ICICI Prudential", "ICICI", "SBI", "Nippon India", "Nippon", "Kotak", "Axis",
+        "Parag Parikh", "Mirae Asset", "Mirae", "UTI", "Motilal Oswal", "Motilal", "Bandhan",
+        "Tata", "Aditya Birla Sun Life", "Aditya Birla", "Canara Robeco", "Canara", "DSP",
+        "Franklin Templeton", "Franklin", "Invesco", "Sundaram", "HSBC", "Quant", "Edelweiss",
+        "Mahindra Manulife", "PGIM India", "WhiteOak", "Baroda BNP", "Groww", "Navi", "Taurus"
+      ];
+
+      const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+      const parsedHoldings = [];
+      const seenSchemes = new Set();
+
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
+
+        // Method A: Table Parsing (pipe or comma-delimited summary rows)
+        if (line.includes('|') || line.includes(',')) {
+          const parts = line.split(/[|,]/).map(p => p.trim());
+          if (parts.length >= 3) {
+            for (let col = 0; col < parts.length; col++) {
+              const candidate = parts[col];
+              const hasAmc = amcList.some(a => candidate.toLowerCase().includes(a.toLowerCase()));
+              const hasFundWord = /Fund|Growth|Plan|Option|ETF|Index/i.test(candidate);
+
+              if (hasAmc && hasFundWord && candidate.length > 10 && !candidate.toLowerCase().includes("mutual fund")) {
+                let val = 0;
+                for (let vCol = col + 1; vCol < parts.length; vCol++) {
+                  const numStr = parts[vCol].replace(/INR|Rs\.?|,/gi, '').trim();
+                  const num = parseFloat(numStr);
+                  if (!isNaN(num) && num > 500) {
+                    val = num;
+                  }
+                }
+
+                if (val > 0 && !seenSchemes.has(candidate)) {
+                  seenSchemes.add(candidate);
+                  const isDebt = /Bond|Debt|Liquid|Arbitrage|Overnight|Cash|PSU|Gilt|Treasury|Credit|Savings|Ultra\s*Short/i.test(candidate);
+                  const cat = isDebt ? "Debt" : /Small/i.test(candidate) ? "Small Cap" : /Mid/i.test(candidate) ? "Mid Cap" : /Large|Top 100|Frontline/i.test(candidate) ? "Large Cap" : "Flexi Cap";
+                  parsedHoldings.push({ name: candidate, category: cat, type: isDebt ? "Debt" : "Equity", value: Math.round(val) });
+                }
+              }
+            }
           }
         }
-      });
 
-      if (schemesFound.length > 0) {
-        clientHoldings = schemesFound;
+        // Method B: Detailed Statement Block Parsing
+        const matchedAmc = amcList.find(a => line.toUpperCase().startsWith(a.toUpperCase()));
+        if (matchedAmc && /Fund|Growth|Plan|Option/i.test(line) && !line.match(/^[\w\s]+Mutual\s+Fund$/i)) {
+          const cleanScheme = line.split(/ISIN|Folio|Closing/i)[0].trim();
+          if (cleanScheme.length > 12 && !seenSchemes.has(cleanScheme)) {
+            let val = 0;
+            for (let j = i + 1; j < Math.min(i + 12, lines.length); j++) {
+              const ahead = lines[j];
+              const valMatch = ahead.match(/(?:Valuation|Current\s*Value|Market\s*Value|Total\s*Value)\s*(?:\([^\)]*\))?\s*[:\-]?\s*(?:INR|Rs\.?)?\s*([\d,]+(?:\.\d{1,2})?)/i);
+              if (valMatch) {
+                val = parseFloat(valMatch[1].replace(/,/g, ''));
+                break;
+              }
+            }
+
+            if (val > 100) {
+              seenSchemes.add(cleanScheme);
+              const isDebt = /Bond|Debt|Liquid|Arbitrage|Overnight|Cash|PSU|Gilt|Treasury|Credit|Savings|Ultra\s*Short/i.test(cleanScheme);
+              const cat = isDebt ? "Debt" : /Small/i.test(cleanScheme) ? "Small Cap" : /Mid/i.test(cleanScheme) ? "Mid Cap" : /Large|Top 100|Frontline/i.test(cleanScheme) ? "Large Cap" : "Flexi Cap";
+              parsedHoldings.push({ name: cleanScheme, category: cat, type: isDebt ? "Debt" : "Equity", value: Math.round(val) });
+            }
+          }
+        }
+      }
+
+      // Update State - Strictly NO Demo Fallback
+      if (parsedHoldings.length > 0) {
+        clientHoldings = parsedHoldings;
+        statusEl.innerHTML = `<span class="text-emerald-400 font-bold">✓ Successfully extracted ${parsedHoldings.length} client mutual fund holdings from ${sourceName}.</span>`;
         renderClientHoldingsTable();
         runPortfolioHealthDiagnostic();
       } else {
-        loadSamplePortfolio();
+        statusEl.innerHTML = `<span class="text-amber-400 font-semibold">⚠️ Could not detect scheme valuations from file. Please use 'Paste CAS Text / Statement' or add schemes manually below.</span>`;
       }
     }
 
     // --- E. Portfolio Diagnostic & 100-Point Scoring Engine ---
     function runPortfolioHealthDiagnostic() {
       if (clientHoldings.length === 0) {
-        document.getElementById('currentScoreNumber').innerText = "-- / 100";
+        document.getElementById('currentScoreNumber').innerText = "N/A";
+        document.getElementById('score_fit').innerText = "-/30";
+        document.getElementById('score_macro').innerText = "-/25";
+        document.getElementById('score_overlap').innerText = "-/25";
+        document.getElementById('score_quality').innerText = "-/20";
+        
+        document.getElementById('bar_fit').style.width = '0%';
+        document.getElementById('bar_macro').style.width = '0%';
+        document.getElementById('bar_overlap').style.width = '0%';
+        document.getElementById('bar_quality').style.width = '0%';
+
+        const notesList = document.getElementById('diagnosticNotesList');
+        notesList.innerHTML = `<li class="text-slate-400">• No existing portfolio uploaded. Proceed with fresh model allocation aligned with the client's risk profile (${clientRiskProfile}) and active macro regime.</li>`;
+
+        updateReportPreview("N/A", 0, 0);
         return;
       }
 
@@ -1321,19 +1464,15 @@
       const equityVal = clientHoldings.filter(f => f.type === 'Equity').reduce((sum, f) => sum + f.value, 0);
       const currentEqPct = totalVal > 0 ? Math.round(equityVal / totalVal * 100) : 0;
 
-      // 1. Target Equity for client profile
       let targetEq = 50;
       if (clientRiskProfile === 'Conservative') targetEq = 15;
       else if (clientRiskProfile === 'Moderate') targetEq = 45;
       else if (clientRiskProfile === 'Aggressive') targetEq = 70;
       else targetEq = 85;
 
-      // Fit Score (Out of 30)
       const eqDiff = Math.abs(currentEqPct - targetEq);
       let fitScore = Math.max(5, Math.round(30 - (eqDiff * 0.8)));
 
-      // Macro Regime Score (Out of 25)
-      // If macro is UNFAVOURABLE (Red) and client has high equity (>65%), penalize
       const isRedRegime = liveDashboardData?.signal === 'UNFAVOURABLE';
       let macroScore = 20;
       if (isRedRegime) {
@@ -1342,17 +1481,13 @@
         else macroScore = 24;
       }
 
-      // Overlap & Scheme Count Score (Out of 25)
       let overlapScore = 22;
-      if (clientHoldings.length < 3) overlapScore = 12; // Under-diversified
-      else if (clientHoldings.length > 15) overlapScore = 14; // Over-diversified / clutter
+      if (clientHoldings.length < 3) overlapScore = 12;
+      else if (clientHoldings.length > 15) overlapScore = 14;
 
-      // Quality Score (Out of 20)
       let qualityScore = 16;
-
       const totalCurrentScore = fitScore + macroScore + overlapScore + qualityScore;
 
-      // Update UI
       document.getElementById('currentScoreNumber').innerText = `${totalCurrentScore} / 100`;
       document.getElementById('score_fit').innerText = `${fitScore}/30`;
       document.getElementById('score_macro').innerText = `${macroScore}/25`;
@@ -1364,7 +1499,6 @@
       document.getElementById('bar_overlap').style.width = (overlapScore / 25 * 100) + '%';
       document.getElementById('bar_quality').style.width = (qualityScore / 20 * 100) + '%';
 
-      // Diagnostic Advisory Notes
       const notesList = document.getElementById('diagnosticNotesList');
       notesList.innerHTML = '';
 
@@ -1390,10 +1524,9 @@
       }
 
       addNote(`Suggested Model Rebalance raises overall portfolio diagnostic health score to 94 / 100.`, true);
-
       updateReportPreview(totalCurrentScore, currentEqPct, 100 - currentEqPct);
     }
-
+    
     // --- F. Suggested Rebalanced Model Portfolio ---
     function updateModelSuggestedPortfolio() {
       const isRedRegime = liveDashboardData?.signal === 'UNFAVOURABLE';
@@ -1451,35 +1584,50 @@
 
     // --- G. PDF Report Synchronizer & Exporter ---
     function updateReportPreview(currScore, currEq, currDebt) {
-      document.getElementById('rptClientName').innerText = document.getElementById('clientNameInput').value || 'Valued Client';
+      document.getElementById('rptClientName').innerText = document.getElementById('clientNameInput').value || 'Valued Investor';
       document.getElementById('rptClientAge').innerText = (document.getElementById('clientAgeInput').value || '35') + ' Years';
       document.getElementById('rptClientProfile').innerText = clientRiskProfile;
       document.getElementById('rptMacroRegime').innerText = `${liveDashboardData?.signal || 'UNFAVOURABLE'} (Macro Transmission)`;
-      document.getElementById('rptCurrentScore').innerText = `${currScore} / 100`;
+      document.getElementById('rptCurrentScore').innerText = currScore === "N/A" ? "N/A (Fresh Deployment)" : `${currScore} / 100`;
 
-      // Update comparison table
       const compBody = document.getElementById('rptAllocCompareBody');
       compBody.innerHTML = '';
 
       const targetEq = parseInt(document.getElementById('suggestedEqText').innerText) || 50;
       const targetDebt = 100 - targetEq;
 
-      compBody.innerHTML = `
-        <tr>
-          <td class="p-2 font-semibold">Equity Assets</td>
-          <td class="p-2 font-bold">${currEq}%</td>
-          <td class="p-2 font-bold text-blue-700">${targetEq}%</td>
-          <td class="p-2 text-slate-600">${currEq > targetEq ? 'Reduce Equity Exposure by ' + (currEq - targetEq) + '%' : 'Increase Equity Exposure by ' + (targetEq - currEq) + '%'}</td>
-        </tr>
-        <tr>
-          <td class="p-2 font-semibold">Debt / Liquid Reserves</td>
-          <td class="p-2 font-bold">${currDebt}%</td>
-          <td class="p-2 font-bold text-emerald-700">${targetDebt}%</td>
-          <td class="p-2 text-slate-600">${currDebt < targetDebt ? 'Allocate ' + (targetDebt - currDebt) + '% to Banking & PSU / Arbitrage' : 'Rebalance surplus to Equity'}</td>
-        </tr>
-      `;
+      if (clientHoldings.length === 0) {
+        compBody.innerHTML = `
+          <tr>
+            <td class="p-2 font-semibold">Equity Assets</td>
+            <td class="p-2 font-bold text-slate-400">0% (No CAS)</td>
+            <td class="p-2 font-bold text-blue-700">${targetEq}%</td>
+            <td class="p-2 text-slate-600">Allocate ${targetEq}% of fresh capital as per model equity basket</td>
+          </tr>
+          <tr>
+            <td class="p-2 font-semibold">Debt / Liquid Reserves</td>
+            <td class="p-2 font-bold text-slate-400">0% (No CAS)</td>
+            <td class="p-2 font-bold text-emerald-700">${targetDebt}%</td>
+            <td class="p-2 text-slate-600">Allocate ${targetDebt}% of fresh capital into debt/arbitrage buffer</td>
+          </tr>
+        `;
+      } else {
+        compBody.innerHTML = `
+          <tr>
+            <td class="p-2 font-semibold">Equity Assets</td>
+            <td class="p-2 font-bold">${currEq}%</td>
+            <td class="p-2 font-bold text-blue-700">${targetEq}%</td>
+            <td class="p-2 text-slate-600">${currEq > targetEq ? 'Reduce Equity Exposure by ' + (currEq - targetEq) + '%' : 'Increase Equity Exposure by ' + (targetEq - currEq) + '%'}</td>
+          </tr>
+          <tr>
+            <td class="p-2 font-semibold">Debt / Liquid Reserves</td>
+            <td class="p-2 font-bold">${currDebt}%</td>
+            <td class="p-2 font-bold text-emerald-700">${targetDebt}%</td>
+            <td class="p-2 text-slate-600">${currDebt < targetDebt ? 'Allocate ' + (targetDebt - currDebt) + '% to Banking & PSU / Arbitrage' : 'Rebalance surplus to Equity'}</td>
+          </tr>
+        `;
+      }
 
-      // Copy Suggested funds to report
       const rptFundsBody = document.getElementById('rptFundsBody');
       rptFundsBody.innerHTML = '';
       const profKey = clientRiskProfile.toLowerCase().replace(' ', '_');
