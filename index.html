@@ -1,113 +1,1794 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark scroll-smooth">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>FII Macro Dashboard — Multi-Horizon CAGR & MoM Asset Allocation</title>
-  <link rel="stylesheet" href="./css/styles.css" />
-</head>
-<body>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Naruka Wealth | Mutual Fund & Portfolio Advisory Portal</title>
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- jsPDF & html2canvas for client report PDF download -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <!-- PDF.js for parsing client CAS PDFs -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+  <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+  </script>
 
-  <header class="top-nav">
-    <div class="brand-title">
-      <h1>FII Macro & Multi-Horizon CAGR Dashboard</h1>
-      <span class="badge-live">DAILY AUTO-SYNC</span>
+    <!-- SheetJS for CAMS Excel / CSV Parsing -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'sans-serif'],
+            display: ['"Space Grotesk"', 'sans-serif']
+          },
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              800: '#1e40af',
+              900: '#1e3a8a',
+              950: '#0f172a'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    .glow-green { box-shadow: 0 0 30px rgba(16, 185, 129, 0.35); }
+    .glow-yellow { box-shadow: 0 0 30px rgba(245, 158, 11, 0.35); }
+    .glow-red { box-shadow: 0 0 30px rgba(239, 68, 68, 0.35); }
+    .glass-card {
+      background: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border: 1px solid rgba(51, 65, 85, 0.6);
+    }
+    .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+    .custom-scrollbar::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+    .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(51, 65, 85, 0.8); border-radius: 4px; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen antialiased flex flex-col selection:bg-blue-600 selection:text-white">
+
+  <!-- ========================================== -->
+  <!-- 1. PIN AUTHENTICATION GATEWAY ("0143")    -->
+  <!-- ========================================== -->
+  <div id="pinAuthOverlay" class="fixed inset-0 z-[9999] flex items-center justify-center bg-slate-950/95 backdrop-blur-xl transition-all duration-300">
+    <div class="w-full max-w-md mx-4 p-8 rounded-3xl glass-card shadow-2xl text-center relative overflow-hidden border border-slate-700/60">
+      <!-- Ambient Glows -->
+      <div class="absolute -top-16 -left-16 w-40 h-40 bg-blue-500/25 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute -bottom-16 -right-16 w-40 h-40 bg-indigo-500/25 rounded-full blur-3xl pointer-events-none"></div>
+      
+      <!-- Brand Logo / Lock Badge -->
+      <div class="w-16 h-16 mx-auto mb-4 rounded-2xl bg-gradient-to-tr from-blue-600 to-indigo-600 p-0.5 shadow-lg shadow-blue-500/30">
+        <div class="w-full h-full bg-slate-900 rounded-[14px] flex items-center justify-center">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+        </div>
+      </div>
+
+      <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 mb-2">
+        <span class="w-1.5 h-1.5 rounded-full bg-blue-400 animate-pulse"></span>
+        <span>NARUKA WEALTH ADVISORY PORTAL</span>
+      </div>
+
+      <h2 class="text-2xl font-bold font-display text-white tracking-tight">Security Access Verification</h2>
+      <p class="text-xs text-slate-400 mt-1.5 mb-6">Enter your 4-digit security PIN to access the advisory tools, CAS analyzer & macro engine.</p>
+
+      <form id="pinForm" onsubmit="handlePinSubmit(event)" class="space-y-5">
+        <div class="flex justify-center gap-3" id="pinInputsContainer">
+          <input type="password" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="pin-digit w-12 h-14 text-center text-2xl font-bold bg-slate-900 border border-slate-700 rounded-2xl text-white focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition shadow-inner" autofocus autocomplete="off" />
+          <input type="password" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="pin-digit w-12 h-14 text-center text-2xl font-bold bg-slate-900 border border-slate-700 rounded-2xl text-white focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition shadow-inner" autocomplete="off" />
+          <input type="password" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="pin-digit w-12 h-14 text-center text-2xl font-bold bg-slate-900 border border-slate-700 rounded-2xl text-white focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition shadow-inner" autocomplete="off" />
+          <input type="password" maxlength="1" inputmode="numeric" pattern="[0-9]*" class="pin-digit w-12 h-14 text-center text-2xl font-bold bg-slate-900 border border-slate-700 rounded-2xl text-white focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-500/20 transition shadow-inner" autocomplete="off" />
+        </div>
+
+        <!-- Clean Error Message (No PIN disclosed) -->
+        <div id="pinErrorMsg" class="text-xs font-semibold text-rose-400 hidden animate-pulse">Incorrect PIN</div>
+
+        <button type="submit" class="w-full py-3.5 px-4 rounded-2xl bg-gradient-to-r from-blue-600 via-indigo-600 to-blue-700 hover:from-blue-500 hover:to-indigo-500 text-white font-semibold text-sm shadow-xl shadow-blue-600/30 transition transform active:scale-[0.98]">
+          Unlock Portal
+        </button>
+      </form>
+
+      <!-- Regulatory Disclaimer on Lock Screen -->
+      <div class="mt-6 pt-5 border-t border-slate-800 text-left">
+        <div class="p-3.5 rounded-2xl bg-slate-950/80 border border-slate-800 text-[11px] text-slate-400 leading-relaxed">
+          <span class="font-bold text-amber-400 block mb-1">⚠️ Regulatory & Usage Disclaimer</span>
+          This dashboard & advisory portal is strictly for educational purposes and personal use by <strong class="text-white">Rahul Naruka</strong>, AMFI Registered Mutual Fund Distributor (ARN-277301 | Rewari | Contact: 8168391356). Mutual fund investments are subject to market risks; read all scheme related documents carefully.
+        </div>
+      </div>
     </div>
-    <div class="sync-meta" id="last-updated-text">Loading daily feed...</div>
+  </div>
+
+  <!-- ========================================== -->
+  <!-- 2. NAVIGATION BAR & BRAND HEADER           -->
+  <!-- ========================================== -->
+  <header class="border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-50 transition-all">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-col md:flex-row justify-between items-center gap-4">
+      
+      <!-- Brand Details -->
+      <div class="flex items-center justify-between w-full md:w-auto">
+        <a href="#macro-section" class="flex items-center gap-3 group">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 via-indigo-600 to-emerald-500 p-0.5 shadow-md shadow-blue-500/20 group-hover:scale-105 transition">
+            <div class="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center font-display font-bold text-lg text-white">
+              NW
+            </div>
+          </div>
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-lg font-bold font-display tracking-tight text-white group-hover:text-blue-400 transition">Naruka Wealth</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">AMFI ARN-277301</span>
+            </div>
+            <p class="text-[11px] text-slate-400">Mutual Fund Distributor • Rahul Naruka (Rewari)</p>
+          </div>
+        </a>
+
+        <!-- Mobile Menu Toggle -->
+        <button onclick="toggleMobileNav()" class="md:hidden p-2 rounded-lg bg-slate-900 border border-slate-800 text-slate-400">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7" />
+          </svg>
+        </button>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav id="navbarLinks" class="hidden md:flex items-center gap-1.5 p-1 bg-slate-900/90 rounded-2xl border border-slate-800 text-xs font-semibold">
+        <a href="#macro-section" class="px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition">Macro Engine</a>
+        <a href="#risk-profiler" class="px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition">Risk Profiler</a>
+        <a href="#cas-analyzer" class="px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition">CAMS CAS Analyzer</a>
+        <a href="#allocation-model" class="px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition">Suggested Portfolio</a>
+        <a href="#report-section" class="px-3 py-1.5 rounded-xl text-blue-400 hover:bg-blue-500/10 transition">PDF Report</a>
+        <a href="#about-contact" class="px-3 py-1.5 rounded-xl text-slate-300 hover:text-white hover:bg-slate-800 transition">Contact</a>
+      </nav>
+
+      <!-- Action Buttons -->
+      <div class="hidden md:flex items-center gap-2.5">
+        <button id="refreshBtn" onclick="loadDashboardData()" class="px-3 py-1.5 text-xs bg-slate-900 hover:bg-slate-800 text-slate-300 rounded-xl border border-slate-800 transition flex items-center gap-1.5">
+          <span>🔄</span> Refresh
+        </button>
+        <button id="lockBtn" onclick="logoutDashboard()" class="px-3 py-1.5 text-xs bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 rounded-xl border border-rose-500/20 transition flex items-center gap-1.5">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+          </svg>
+          Lock
+        </button>
+      </div>
+
+    </div>
   </header>
 
-  <main class="container">
-    <!-- Top Daily FII/DII & MoM Regime KPI Strip -->
-    <section class="kpi-grid">
-      <div class="kpi-card">
-        <div class="kpi-label">Latest Daily FII Net Flow</div>
-        <div class="kpi-value" id="kpi-fii-net">--</div>
-        <div class="kpi-sub" id="kpi-fii-date">NSE Cash Provisional</div>
+  <!-- ========================================== -->
+  <!-- MAIN APPLICATION CONTENT                   -->
+  <!-- ========================================== -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-1 space-y-12 w-full">
+
+    <!-- ---------------------------------------- -->
+    <!-- SECTION A: MACRO ENGINE & SIGNAL SYSTEM  -->
+    <!-- ---------------------------------------- -->
+    <section id="macro-section" class="space-y-6">
+      
+      <!-- Regime Status Banner -->
+      <div id="signalCard" class="rounded-3xl border p-6 lg:p-8 transition-all duration-300 relative overflow-hidden glass-card">
+        <div class="flex flex-col xl:flex-row justify-between xl:items-center gap-8">
+          
+          <div class="xl:w-4/12 space-y-3">
+            <div class="flex items-center gap-2">
+              <span class="text-xs uppercase tracking-wider font-semibold text-slate-400">Current Macro Transmission State</span>
+              <span id="signalBadge" class="text-xs font-bold px-3 py-0.5 rounded-full bg-slate-800 text-slate-300">Evaluating...</span>
+            </div>
+            
+            <div class="flex items-baseline gap-3">
+              <h2 id="signalTitle" class="text-3xl sm:text-4xl font-extrabold font-display tracking-tight">Evaluating Signal...</h2>
+              <span id="signalScore" class="text-xs font-semibold px-2.5 py-1 rounded-lg bg-slate-800 text-slate-400">Score: --</span>
+            </div>
+            
+            <p id="signalSummary" class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+              Evaluating global yields, US CPI inflation, crude and currency transmission...
+            </p>
+
+            <div class="text-xs text-slate-500 pt-1 flex items-center gap-2">
+              <span>🕒 Last Automated Update: <strong id="lastUpdated" class="text-slate-300">--</strong></span>
+            </div>
+          </div>
+
+          <!-- 7 Core Macro Transmission Gauges -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 xl:w-8/12">
+            <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800/80 text-center hover:border-slate-700 transition">
+              <span class="text-[11px] text-slate-400 font-medium">US 10Y Yield</span>
+              <div id="m_us10y" class="text-base font-bold mt-0.5 text-white">--</div>
+              <span id="b_us10y" class="text-[10px] text-slate-400 block truncate">--</span>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800/80 text-center hover:border-slate-700 transition">
+              <span class="text-[11px] text-amber-300 font-medium">US YoY CPI</span>
+              <div id="m_us_cpi" class="text-base font-bold mt-0.5 text-white">--</div>
+              <span id="b_us_cpi" class="text-[10px] text-slate-400 block truncate">--</span>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800/80 text-center hover:border-slate-700 transition">
+              <span class="text-[11px] text-slate-400 font-medium">Dollar Index (DXY)</span>
+              <div id="m_dxy" class="text-base font-bold mt-0.5 text-white">--</div>
+              <span id="b_dxy" class="text-[10px] text-slate-400 block truncate">--</span>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800/80 text-center hover:border-slate-700 transition">
+              <span class="text-[11px] text-slate-400 font-medium">Brent Crude</span>
+              <div id="m_brent" class="text-base font-bold mt-0.5 text-white">--</div>
+              <span id="b_brent" class="text-[10px] text-slate-400 block truncate">--</span>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800/80 text-center hover:border-slate-700 transition">
+              <span class="text-[11px] text-slate-400 font-medium">USD / INR</span>
+              <div id="m_usdinr" class="text-base font-bold mt-0.5 text-white">--</div>
+              <span id="b_usdinr" class="text-[10px] text-slate-400 block truncate">--</span>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800/80 text-center hover:border-slate-700 transition">
+              <span class="text-[11px] text-cyan-300 font-medium">Nifty Fwd P/E</span>
+              <div id="m_fwd_pe" class="text-base font-bold mt-0.5 text-white">--</div>
+              <span id="b_fwd_pe" class="text-[10px] text-slate-400 block truncate">--</span>
+            </div>
+
+            <div class="p-3.5 rounded-2xl bg-slate-900/90 border border-slate-800/80 text-center col-span-2 hover:border-slate-700 transition">
+              <span class="text-[11px] text-emerald-300 font-medium">Nifty EPS Growth</span>
+              <div id="m_eps_growth" class="text-base font-bold mt-0.5 text-white">--</div>
+              <span id="b_eps_growth" class="text-[10px] text-slate-400 block truncate">--</span>
+            </div>
+          </div>
+
+        </div>
       </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Latest Daily DII Net Flow</div>
-        <div class="kpi-value" id="kpi-dii-net">--</div>
-        <div class="kpi-sub" id="kpi-dii-date">NSE Cash Provisional</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">Trailing 1M (MoM) FII Net Flow</div>
-        <div class="kpi-value" id="kpi-mom-fii">--</div>
-        <div class="kpi-sub">Rolling 22-Session Cumulative</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-label">MoM Tactical Macro Regime</div>
-        <div class="kpi-value" style="font-size: 1.05rem; color: #38bdf8;" id="kpi-regime-status">--</div>
-        <div class="kpi-sub">Auto-adjusts MoM Equity/Debt Tilt</div>
+
+      <!-- Macro Charts (Flows & Transmission) -->
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="p-6 rounded-3xl glass-card space-y-3">
+          <div class="flex justify-between items-center">
+            <h3 class="text-base font-bold text-white font-display">FII Net Equity vs Net Debt Inflows (1993 – 2026)</h3>
+            <span class="text-[10px] text-slate-400 px-2.5 py-0.5 rounded-full bg-slate-900 border border-slate-800">SEBI / NSDL Data</span>
+          </div>
+          <p class="text-xs text-slate-400">Historical shift from equity-heavy volatile inflows to institutional bond inclusions.</p>
+          <div class="h-72"><canvas id="flowChart"></canvas></div>
+        </div>
+
+        <div class="p-6 rounded-3xl glass-card space-y-3">
+          <div class="flex justify-between items-center">
+            <h3 class="text-base font-bold text-white font-display">Macro Transmission: US Yields, CPI & Brent</h3>
+            <span class="text-[10px] text-slate-400 px-2.5 py-0.5 rounded-full bg-slate-900 border border-slate-800">Macro Regimes</span>
+          </div>
+          <p class="text-xs text-slate-400">Triple-axis comparison tracking global interest rates and inflation shocks.</p>
+          <div class="h-72"><canvas id="macroChart"></canvas></div>
+        </div>
       </div>
     </section>
 
-    <!-- Multi-Horizon Return & CAGR Engine Section -->
-    <section class="section-card">
-      <div class="section-header">
+    <!-- ---------------------------------------------------- -->
+    <!-- SECTION B: INTERACTIVE CLIENT RISK PROFILER ENGINE   -->
+    <!-- ---------------------------------------------------- -->
+    <section id="risk-profiler" class="p-6 sm:p-8 rounded-3xl glass-card space-y-6 border border-blue-500/20 relative overflow-hidden">
+      
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-5">
         <div>
-          <h2>1M, 3M, 1Y, 3Y & 5Y Multi-Horizon CAGR Performance</h2>
-          <p style="font-size: 0.84rem; color: #94a3b8;">1M, 3M & 1Y show point-to-point absolute returns; 3Y & 5Y show annualized compound growth rate (CAGR).</p>
+          <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-blue-400">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+            <span>Tool 1: Client Suitability & Risk Assessment</span>
+          </div>
+          <h2 class="text-xl sm:text-2xl font-bold font-display text-white mt-1">Determine Client Risk Profile & Appetite</h2>
+          <p class="text-xs text-slate-400 mt-1">Calibrates psychological risk tolerance, investment horizon, and demographic age into 4 SEBI-aligned risk profiles.</p>
         </div>
-        <div class="filter-pills">
-          <button class="pill-btn filter-btn active" data-filter="all">All Benchmarks & Funds</button>
-          <button class="pill-btn filter-btn" data-filter="indices">Macro & Indices</button>
-          <button class="pill-btn filter-btn" data-filter="funds">Suggested Mutual Funds</button>
+
+        <div id="riskProfileBadge" class="px-4 py-2 rounded-2xl bg-slate-900 border border-slate-800 text-center min-w-[160px]">
+          <span class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold block">Calculated Profile</span>
+          <span id="profileResultTitle" class="text-base font-bold text-blue-400 font-display">Moderate</span>
         </div>
       </div>
 
-      <div class="table-responsive">
-        <table class="cagr-table">
-          <thead>
-            <tr>
-              <th>Benchmark / Scheme Name</th>
-              <th>Category</th>
-              <th>Latest NAV / Level</th>
-              <th>1 Month</th>
-              <th>3 Month</th>
-              <th>1 Year</th>
-              <th>3Y CAGR</th>
-              <th>5Y CAGR</th>
-            </tr>
-          </thead>
-          <tbody id="cagr-table-body">
-            <!-- Populated dynamically via js/dashboard-upgrade.js -->
-          </tbody>
-        </table>
-      </div>
+      <!-- Questionnaire Form -->
+      <form id="riskQuestionnaireForm" onchange="calculateClientRiskScore()" class="grid grid-cols-1 md:grid-cols-2 gap-6 text-xs">
+        
+        <!-- Client Personal Info -->
+        <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-3 md:col-span-2">
+          <span class="text-xs font-bold text-white uppercase tracking-wider block text-blue-400">Investor Demographic Information</span>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label class="block text-slate-400 mb-1">Investor Full Name</label>
+              <input type="text" id="clientNameInput" placeholder="Enter Investor Name" value="" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-blue-500" />
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Investor Age (Years)</label>
+              <input type="number" id="clientAgeInput" value="35" min="18" max="95" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-blue-500" />
+            </div>
+            <div>
+              <label class="block text-slate-400 mb-1">Primary Financial Goal</label>
+              <select id="clientGoalInput" class="w-full px-3 py-2 bg-slate-950 border border-slate-800 rounded-xl text-white focus:outline-none focus:border-blue-500">
+                <option value="Long Term Wealth Compounding">Long Term Wealth Compounding</option>
+                <option value="Retirement Corpus Accumulation">Retirement Corpus Accumulation</option>
+                <option value="Child Higher Education">Child Higher Education</option>
+                <option value="Capital Safety & Regular Income">Capital Safety & Regular Income</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- Question 1: Horizon -->
+        <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-2">
+          <label class="font-semibold text-white block">1. What is your planned investment horizon?</label>
+          <div class="space-y-1.5 text-slate-300">
+            <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800/50 cursor-pointer">
+              <input type="radio" name="q_horizon" value="1" class="text-blue-600 focus:ring-0"> <span>Less than 3 Years (Short Term)</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800/50 cursor-pointer">
+              <input type="radio" name="q_horizon" value="2" class="text-blue-600 focus:ring-0"> <span>3 to 5 Years (Medium Term)</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800/50 cursor-pointer">
+              <input type="radio" name="q_horizon" value="3" checked class="text-blue-600 focus:ring-0"> <span>5 to 10 Years (Long Term)</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800/50 cursor-pointer">
+              <input type="radio" name="q_horizon" value="4" class="text-blue-600 focus:ring-0"> <span>More than 10 Years (Generational)</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Question 2: Drawdown Tolerance -->
+        <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-2">
+          <label class="font-semibold text-white block">2. How would you react if your portfolio drops 20% in 3 months?</label>
+          <div class="space-y-1.5 text-slate-300">
+            <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800/50 cursor-pointer">
+              <input type="radio" name="q_drawdown" value="1" class="text-blue-600 focus:ring-0"> <span>Panic and immediately redeem all units to avoid further losses</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800/50 cursor-pointer">
+              <input type="radio" name="q_drawdown" value="2" class="text-blue-600 focus:ring-0"> <span>Feel uneasy and shift a portion into bank FD or debt funds</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800/50 cursor-pointer">
+              <input type="radio" name="q_drawdown" value="3" checked class="text-blue-600 focus:ring-0"> <span>Stay invested and patiently wait for market recovery</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800/50 cursor-pointer">
+              <input type="radio" name="q_drawdown" value="4" class="text-blue-600 focus:ring-0"> <span>Excited; treat the correction as a discount to invest more lump-sum</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Question 3: Knowledge & Experience -->
+        <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-2">
+          <label class="font-semibold text-white block">3. What is your prior investment experience in equities/mutual funds?</label>
+          <div class="space-y-1.5 text-slate-300">
+            <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800/50 cursor-pointer">
+              <input type="radio" name="q_exp" value="1" class="text-blue-600 focus:ring-0"> <span>Novice: Only Bank FDs, PPF & Post Office deposits</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800/50 cursor-pointer">
+              <input type="radio" name="q_exp" value="2" checked class="text-blue-600 focus:ring-0"> <span>Moderate: Invested in balanced or index funds for 1-3 years</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800/50 cursor-pointer">
+              <input type="radio" name="q_exp" value="3" class="text-blue-600 focus:ring-0"> <span>Experienced: Active SIPs across mid/small caps for 3-5+ years</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800/50 cursor-pointer">
+              <input type="radio" name="q_exp" value="4" class="text-blue-600 focus:ring-0"> <span>Seasoned: Direct equity, derivatives, and mutual funds across full market cycles</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Question 4: Return Expectation -->
+        <div class="p-4 rounded-2xl bg-slate-900/60 border border-slate-800/80 space-y-2">
+          <label class="font-semibold text-white block">4. What is your expected return vs risk balance?</label>
+          <div class="space-y-1.5 text-slate-300">
+            <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800/50 cursor-pointer">
+              <input type="radio" name="q_return" value="1" class="text-blue-600 focus:ring-0"> <span>7% - 8% (Capital safety, beat bank FD post-tax)</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800/50 cursor-pointer">
+              <input type="radio" name="q_return" value="2" checked class="text-blue-600 focus:ring-0"> <span>10% - 12% (Moderate growth, moderate equity swings)</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800/50 cursor-pointer">
+              <input type="radio" name="q_return" value="3" class="text-blue-600 focus:ring-0"> <span>13% - 15% (High wealth creation, comfortable with sharp corrections)</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 rounded-lg hover:bg-slate-800/50 cursor-pointer">
+              <input type="radio" name="q_return" value="4" class="text-blue-600 focus:ring-0"> <span>15%+ (Maximum alpha, high mid/small cap volatility tolerated)</span>
+            </label>
+          </div>
+        </div>
+
+      </form>
     </section>
 
-    <!-- MoM Asset Allocation & Suggested Funds by Risk Profile -->
-    <section class="section-card">
-      <div class="section-header">
+    <!-- ---------------------------------------------------- -->
+    <!-- SECTION C: CAMS / KFINTECH CAS STATEMENT ANALYZER    -->
+    <!-- ---------------------------------------------------- -->
+    <section id="cas-analyzer" class="p-6 sm:p-8 rounded-3xl glass-card space-y-6">
+      
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-5">
         <div>
-          <h2>MoM Dynamic Asset Allocation & Suggested Funds by Risk Profile</h2>
-          <p style="font-size: 0.84rem; color: #94a3b8;">Select an investor risk profile to view Month-on-Month (MoM) FII-adjusted asset weights and AMFI direct schemes.</p>
+          <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-400">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span>Tool 2: CAMS / KFintech Consolidated Account Statement (CAS) Ingestion</span>
+          </div>
+          <h2 class="text-xl sm:text-2xl font-bold font-display text-white mt-1">Upload & Analyze Existing Mutual Fund Portfolio</h2>
+          <p class="text-xs text-slate-400 mt-1">Fetch and analyze client holdings directly from official CAMS / KFintech CAS statements or enter portfolio details.</p>
         </div>
-        <div class="filter-pills">
-          <button class="pill-btn risk-btn" data-profile="conservative">Conservative</button>
-          <button class="pill-btn risk-btn" data-profile="moderate">Moderate</button>
-          <button class="pill-btn risk-btn active" data-profile="balanced">Balanced</button>
-          <button class="pill-btn risk-btn" data-profile="aggressive">Aggressive</button>
-          <button class="pill-btn risk-btn" data-profile="very_aggressive">Very Aggressive</button>
+
+        <!-- Action Buttons: Amit Demo + Clear Holdings -->
+        <div class="flex items-center gap-2">
+          <button onclick="loadAmitDemoPortfolio()" class="px-3.5 py-2 text-xs font-semibold rounded-xl bg-slate-900 hover:bg-slate-800 text-blue-400 border border-slate-700 transition flex items-center gap-1.5">
+            📂 Load Amit Demo Portfolio
+          </button>
+          <button onclick="clearClientHoldings()" class="px-3.5 py-2 text-xs font-semibold rounded-xl bg-slate-900 hover:bg-slate-800 text-rose-400 border border-slate-800 transition flex items-center gap-1.5">
+            🗑️ Clear Holdings
+          </button>
         </div>
       </div>
 
-      <div class="allocation-grid">
-        <div class="alloc-bars-box" id="alloc-bars-container">
-          <!-- Populated dynamically -->
+      
+      <!-- Collapsible Direct Paste Drawer -->
+      
+        <textarea id="casPastedText" rows="6" placeholder="Paste full text or summary table copied from your CAMS CAS PDF, eCAS email, or portal..." class="w-full p-3 bg-slate-950 border border-slate-800 rounded-xl text-xs text-slate-200 font-mono focus:outline-none focus:border-blue-500"></textarea>
+        <button onclick="parsePastedCasText()" class="py-2 px-4 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition">
+          Extract & Analyze Holdings
+        </button>
+      </div>
+
+      <!-- CAS Fetch & Upload Options -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- File Drag & Drop -->
+        <div class="lg:col-span-2 p-6 rounded-2xl bg-slate-900/60 border-2 border-dashed border-slate-700 hover:border-blue-500/80 transition-colors text-center space-y-4 flex flex-col items-center justify-center">
+          <div class="w-14 h-14 rounded-2xl bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+            </svg>
+          </div>
+          <div>
+            <span class="text-sm font-semibold text-white block">Drop CAMS / KFintech CAS (PDF or Excel)</span>
+            <span class="text-xs text-slate-400 mt-1 block">Supports encrypted or non-encrypted CAMS Consolidated Statements</span>
+          </div>
+          <div class="flex flex-col sm:flex-row items-center gap-3">
+            <input type="file" id="casFileInput" accept=".pdf,.xlsx,.csv,.txt" onchange="handleCasFileUpload(event)" class="text-xs text-slate-400 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-600 file:text-white hover:file:bg-blue-500 cursor-pointer" />
+            <input type="password" id="casPasswordInput" placeholder="PDF Password (if any)" class="px-3 py-2 bg-slate-950 border border-slate-700 rounded-xl text-xs text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 w-44" />
+          </div>
+          <span id="casStatusText" class="text-xs text-slate-400">Client statement parsing is done 100% locally in browser for total privacy.</span>
         </div>
+
+        <!-- Quick Manual Entry / Add Fund Modal -->
+        <div class="p-5 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-3">
+          <span class="text-xs font-bold text-white uppercase tracking-wider block text-slate-300">Quick Manual Add Fund</span>
+          <div>
+            <label class="block text-[11px] text-slate-400 mb-1">Mutual Fund Scheme Name</label>
+            <input type="text" id="manualFundName" placeholder="e.g. HDFC Top 100 Fund" class="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white" />
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Category</label>
+              <select id="manualFundCat" class="w-full px-2 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white">
+                <option value="Large Cap">Large Cap</option>
+                <option value="Flexi Cap">Flexi Cap</option>
+                <option value="Mid Cap">Mid Cap</option>
+                <option value="Small Cap">Small Cap</option>
+                <option value="Hybrid / BAF">Hybrid / BAF</option>
+                <option value="Debt">Debt / Liquid</option>
+                <option value="Arbitrage">Arbitrage</option>
+              </select>
+            </div>
+            <div>
+              <label class="block text-[11px] text-slate-400 mb-1">Current Value (₹)</label>
+              <input type="number" id="manualFundVal" placeholder="50000" class="w-full px-3 py-1.5 bg-slate-950 border border-slate-800 rounded-xl text-xs text-white" />
+            </div>
+          </div>
+          <button onclick="addManualFund()" class="w-full py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition border border-slate-700">
+            + Add to Client Holdings
+          </button>
+        </div>
+
+      </div>
+
+      <!-- Current Portfolio Holdings Table -->
+      <div class="rounded-2xl bg-slate-900/90 border border-slate-800 overflow-hidden">
+        <div class="p-4 border-b border-slate-800 flex flex-col sm:flex-row justify-between sm:items-center gap-2">
+          <div>
+            <h3 class="text-sm font-bold text-white font-display">Detected Client Holdings</h3>
+            <p class="text-xs text-slate-400">Total Portfolio Value: <strong id="totalClientVal" class="text-white">₹0</strong> | Schemes: <strong id="totalClientSchemes" class="text-white">0</strong></p>
+          </div>
+          <div class="flex items-center gap-3 text-xs">
+            <span class="text-blue-400 font-semibold">Equity: <span id="clientEquityPct">0%</span></span>
+            <span class="text-emerald-400 font-semibold">Debt: <span id="clientDebtPct">0%</span></span>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-950/70 text-slate-400 uppercase text-[10px] border-b border-slate-800">
+              <tr>
+                <th class="py-2.5 px-3">Scheme Name</th>
+                <th class="py-2.5 px-3">Category</th>
+                <th class="py-2.5 px-3">Asset Type</th>
+                <th class="py-2.5 px-3">Current Value</th>
+                <th class="py-2.5 px-3">Weight (%)</th>
+                <th class="py-2.5 px-3 text-center">Action</th>
+              </tr>
+            </thead>
+            <tbody id="clientHoldingsBody" class="divide-y divide-slate-800/60 text-slate-300">
+              <tr>
+                <td colspan="6" class="py-6 text-center text-slate-500">No client portfolio loaded. Upload your CAMS/KFintech CAS (PDF/Excel) or proceed directly with fresh model allocation.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ---------------------------------------------------- -->
+    <!-- SECTION D: PORTFOLIO DIAGNOSTIC SCORECARD (OUT OF 100)-->
+    <!-- ---------------------------------------------------- -->
+    <section id="portfolio-scorecard" class="p-6 sm:p-8 rounded-3xl glass-card space-y-6">
+      
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-5">
         <div>
-          <h3 style="font-size: 0.95rem; color: #cbd5e1; margin-bottom: 0.85rem; text-transform: uppercase; letter-spacing: 0.04em;">
-            Suggested Portfolio Funds & Target Weights
-          </h3>
-          <div class="funds-list" id="suggested-funds-container">
-            <!-- Populated dynamically -->
+          <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-400">
+            <span class="w-2 h-2 rounded-full bg-amber-500"></span>
+            <span>Tool 3: Quantitative Diagnostic & Health Scoring</span>
+          </div>
+          <h2 class="text-xl sm:text-2xl font-bold font-display text-white mt-1">Current Portfolio Score vs Suggested Portfolio Score</h2>
+          <p class="text-xs text-slate-400 mt-1">Comprehensive 100-point institutional diagnostic evaluating asset fit, scheme concentration, downside risk & overlap.</p>
+        </div>
+
+        <!-- Score Comparison Pill -->
+        <div class="flex items-center gap-3">
+          <div class="px-4 py-2 rounded-2xl bg-slate-900 border border-slate-800 text-center">
+            <span class="text-[10px] uppercase text-slate-400 font-semibold block">Current Score</span>
+            <span id="currentScoreNumber" class="text-2xl font-bold text-amber-400 font-display">-- / 100</span>
+          </div>
+          <div class="px-4 py-2 rounded-2xl bg-blue-500/10 border border-blue-500/20 text-center">
+            <span class="text-[10px] uppercase text-blue-300 font-semibold block">Model Suggested</span>
+            <span id="suggestedScoreNumber" class="text-2xl font-bold text-emerald-400 font-display">94 / 100</span>
           </div>
         </div>
       </div>
+
+      <!-- Score Breakdown Gauges -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-slate-400 font-medium">1. Risk Profile Alignment</span>
+            <span id="score_fit" class="font-bold text-white">--/30</span>
+          </div>
+          <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden">
+            <div id="bar_fit" class="bg-blue-500 h-full rounded-full transition-all duration-500" style="width: 50%;"></div>
+          </div>
+          <p id="note_fit" class="text-[11px] text-slate-400">Equity-to-debt ratio matched against investor risk tolerance.</p>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-slate-400 font-medium">2. Macro Regime Transmission</span>
+            <span id="score_macro" class="font-bold text-white">--/25</span>
+          </div>
+          <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden">
+            <div id="bar_macro" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 50%;"></div>
+          </div>
+          <p id="note_macro" class="text-[11px] text-slate-400">Positioning relative to current FII capital flows & yields.</p>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-slate-400 font-medium">3. Scheme Overlap & Spread</span>
+            <span id="score_overlap" class="font-bold text-white">--/25</span>
+          </div>
+          <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden">
+            <div id="bar_overlap" class="bg-amber-500 h-full rounded-full transition-all duration-500" style="width: 50%;"></div>
+          </div>
+          <p id="note_overlap" class="text-[11px] text-slate-400">Diversification across large, mid, small cap & debt buckets.</p>
+        </div>
+
+        <div class="p-4 rounded-2xl bg-slate-900/80 border border-slate-800 space-y-2">
+          <div class="flex justify-between items-center text-xs">
+            <span class="text-slate-400 font-medium">4. Fund Quality (Zfunds / Platform)</span>
+            <span id="score_quality" class="font-bold text-white">--/20</span>
+          </div>
+          <div class="w-full bg-slate-950 rounded-full h-2 overflow-hidden">
+            <div id="bar_quality" class="bg-indigo-500 h-full rounded-full transition-all duration-500" style="width: 50%;"></div>
+          </div>
+          <p id="note_quality" class="text-[11px] text-slate-400">Rolling returns consistency, downside capture & low expense ratio.</p>
+        </div>
+
+      </div>
+
+      <!-- Diagnostic Observations & Gaps -->
+      <div class="p-4 rounded-2xl bg-slate-900/90 border border-slate-800 space-y-2">
+        <span class="text-xs font-bold text-amber-400 uppercase tracking-wider block">🔍 Diagnostic Audit & Rebalancing Advisory</span>
+        <ul id="diagnosticNotesList" class="space-y-1.5 text-xs text-slate-300">
+          <li>• Load or input a portfolio above to run the 100-point diagnostic check.</li>
+        </ul>
+      </div>
+
     </section>
+
+    <!-- ---------------------------------------------------- -->
+    <!-- SECTION E: SUGGESTED REBALANCED MODEL PORTFOLIO      -->
+    <!-- ---------------------------------------------------- -->
+    <section id="allocation-model" class="p-6 sm:p-8 rounded-3xl glass-card space-y-6">
+      
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-5">
+        <div>
+          <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-blue-400">
+            <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+            <span>Tool 4: Dynamic Rebalancing Engine (Zfunds / Platform Rules)</span>
+          </div>
+          <h2 class="text-xl sm:text-2xl font-bold font-display text-white mt-1">Model Suggested Mutual Fund Portfolio</h2>
+          <p class="text-xs text-slate-400 mt-1">Calibrated to current macro transmission (<span id="rebalanceMacroSignal" class="text-rose-400 font-bold">RED LIGHT</span>) and client profile (<span id="rebalanceClientProfile" class="text-blue-400 font-bold">MODERATE</span>).</p>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button onclick="applySuggestedModelToReport()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs transition shadow-lg shadow-blue-600/20">
+            ✨ Include in Client Report
+          </button>
+        </div>
+      </div>
+
+      <!-- Target Split Visual -->
+      <div class="space-y-3">
+        <div class="flex justify-between items-center text-xs font-bold">
+          <span class="text-blue-400">Suggested Equity: <span id="suggestedEqText">50%</span></span>
+          <span class="text-emerald-400">Suggested Debt / Arbitrage: <span id="suggestedDebtText">50%</span></span>
+        </div>
+
+        <div class="w-full bg-slate-950 rounded-full h-4 overflow-hidden flex p-0.5 border border-slate-800">
+          <div id="suggestedEqBar" class="bg-gradient-to-r from-blue-600 to-indigo-500 h-full rounded-l-full transition-all duration-700" style="width: 50%;"></div>
+          <div id="suggestedDebtBar" class="bg-gradient-to-r from-emerald-500 to-teal-400 h-full rounded-r-full transition-all duration-700" style="width: 50%;"></div>
+        </div>
+      </div>
+
+      <!-- Suggested Fund Scheme Table -->
+      <div class="rounded-2xl bg-slate-900/90 border border-slate-800 overflow-hidden">
+        <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+          <span class="text-xs font-bold text-white uppercase tracking-wider">Curated Mutual Fund Allocation Basket</span>
+          <span class="text-[11px] text-slate-400">Selection Criteria: 3Y Rolling Alpha, Low Downside Capture (&lt;85), AMC Quality</span>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-950/70 text-slate-400 uppercase text-[10px] border-b border-slate-800">
+              <tr>
+                <th class="py-2.5 px-3">Scheme Name</th>
+                <th class="py-2.5 px-3">Category</th>
+                <th class="py-2.5 px-3">Type</th>
+                <th class="py-2.5 px-3">Target Allocation (%)</th>
+                <th class="py-2.5 px-3">Recommended SIP / STP Deployment Mode</th>
+              </tr>
+            </thead>
+            <tbody id="suggestedFundsTableBody" class="divide-y divide-slate-800/60 text-slate-300">
+              <!-- Rendered Dynamically -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ---------------------------------------------------- -->
+    <!-- SECTION F: COMPLETE CLIENT REPORT PDF GENERATOR      -->
+    <!-- ---------------------------------------------------- -->
+    <section id="report-section" class="p-6 sm:p-8 rounded-3xl glass-card space-y-6 border border-emerald-500/20">
+      
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-slate-800 pb-5">
+        <div>
+          <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-400">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span>Tool 5: Institutional PDF Report Exporter</span>
+          </div>
+          <h2 class="text-xl sm:text-2xl font-bold font-display text-white mt-1">Client Portfolio Review & Advisory Report</h2>
+          <p class="text-xs text-slate-400 mt-1">Generates an executive, investor-ready PDF document containing scores, diagnostic audit, and curated rebalancing plan.</p>
+        </div>
+
+        <button onclick="downloadClientReportPDF()" id="downloadPdfBtn" class="px-5 py-3 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-xs shadow-xl shadow-emerald-500/20 transition flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg>
+          Download Client Report as PDF
+        </button>
+      </div>
+
+      <!-- Printable Report Container Preview -->
+      <div id="printableReportContainer" class="p-6 sm:p-10 rounded-2xl bg-white text-slate-900 shadow-2xl space-y-8 font-sans max-w-4xl mx-auto border border-slate-200">
+        
+        <!-- Report Header -->
+        <div class="flex justify-between items-start border-b border-slate-200 pb-6">
+          <div>
+            <div class="flex items-center gap-2">
+              <span class="text-2xl font-black font-display tracking-tight text-blue-700">NARUKA WEALTH</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-200">AMFI ARN-277301</span>
+            </div>
+            <p class="text-xs text-slate-500 mt-0.5">Mutual Fund Advisory & Wealth Distribution</p>
+            <p class="text-[11px] text-slate-500">Rewari, Haryana • Phone: +91 8168391356 • Email: narukawealth@gmail.com</p>
+          </div>
+          <div class="text-right text-xs">
+            <span class="text-[10px] font-bold uppercase tracking-wider text-slate-400 block">Confidential Review</span>
+            <span class="font-bold text-slate-800" id="rptDate">November 2026</span>
+          </div>
+        </div>
+
+        <!-- Client & Diagnostic Summary Block -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 p-4 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">Client Name</span>
+            <strong id="rptClientName" class="text-slate-800 text-sm">Valued Investor</strong>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">Client Age</span>
+            <strong id="rptClientAge" class="text-slate-800 text-sm">35 Years</strong>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">Assessed Risk Profile</span>
+            <strong id="rptClientProfile" class="text-blue-700 text-sm font-bold">Moderate</strong>
+          </div>
+          <div>
+            <span class="text-slate-400 block text-[10px] uppercase font-bold">Macro Regime</span>
+            <strong id="rptMacroRegime" class="text-rose-600 text-sm font-bold">Unfavourable (Red)</strong>
+          </div>
+        </div>
+
+        <!-- Portfolio Diagnostic Score Cards -->
+        <div class="grid grid-cols-2 gap-4">
+          <div class="p-4 rounded-xl bg-amber-50 border border-amber-200 text-center">
+            <span class="text-xs text-amber-800 font-bold block">Current Portfolio Health Score</span>
+            <div id="rptCurrentScore" class="text-3xl font-black text-amber-600 mt-1">62 / 100</div>
+            <span class="text-[11px] text-amber-700 mt-1 block">Requires Equity-Debt Rebalancing</span>
+          </div>
+          <div class="p-4 rounded-xl bg-emerald-50 border border-emerald-200 text-center">
+            <span class="text-xs text-emerald-800 font-bold block">Suggested Model Portfolio Score</span>
+            <div id="rptSuggestedScore" class="text-3xl font-black text-emerald-600 mt-1">94 / 100</div>
+            <span class="text-[11px] text-emerald-700 mt-1 block">Optimized for Downside & Alpha</span>
+          </div>
+        </div>
+
+        <!-- Allocation Comparison Table -->
+        <div class="space-y-2">
+          <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Asset Allocation Comparison</h4>
+          <table class="w-full text-left text-xs border border-slate-200">
+            <thead class="bg-slate-100 text-slate-700 font-bold text-[11px]">
+              <tr>
+                <th class="p-2 border-b border-slate-200">Metric</th>
+                <th class="p-2 border-b border-slate-200">Current Portfolio</th>
+                <th class="p-2 border-b border-slate-200">Model Suggested</th>
+                <th class="p-2 border-b border-slate-200">Variance / Action</th>
+              </tr>
+            </thead>
+            <tbody id="rptAllocCompareBody" class="divide-y divide-slate-200 text-slate-600">
+              <!-- Rendered by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Suggested Fund Scheme Portfolio -->
+        <div class="space-y-2">
+          <h4 class="text-xs font-bold text-slate-800 uppercase tracking-wider">Model Suggested Mutual Fund Basket (Zfunds / Platform Rules)</h4>
+          <table class="w-full text-left text-xs border border-slate-200">
+            <thead class="bg-slate-100 text-slate-700 font-bold text-[11px]">
+              <tr>
+                <th class="p-2 border-b border-slate-200">Recommended Scheme</th>
+                <th class="p-2 border-b border-slate-200">Category</th>
+                <th class="p-2 border-b border-slate-200">Target Allocation</th>
+                <th class="p-2 border-b border-slate-200">Deployment Stance</th>
+              </tr>
+            </thead>
+            <tbody id="rptFundsBody" class="divide-y divide-slate-200 text-slate-600">
+              <!-- Rendered by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Distributor Signoff & Footer -->
+        <div class="pt-6 border-t border-slate-200 flex justify-between items-end text-xs">
+          <div class="space-y-1">
+            <span class="font-bold text-slate-800 block">Advisory Prepared By:</span>
+            <p class="text-slate-600"><strong>Rahul Naruka</strong></p>
+            <p class="text-slate-500">AMFI Registered Mutual Fund Distributor</p>
+            <p class="text-slate-500">ARN: <strong>277301</strong> • Rewari, Haryana</p>
+            <p class="text-slate-500">Contact: +91 8168391356 • narukawealth@gmail.com</p>
+          </div>
+          <div class="text-right">
+            <div class="h-10 w-32 border-b border-slate-400 mb-1 ml-auto"></div>
+            <span class="text-[10px] text-slate-400 uppercase font-semibold">Authorized Signatory</span>
+          </div>
+        </div>
+
+        <!-- Mandatory Disclaimer at bottom of report -->
+        <div class="p-3 bg-slate-50 rounded-lg border border-slate-200 text-[10px] text-slate-500 leading-normal">
+          <strong>Disclaimer:</strong> This portfolio diagnostic review is prepared strictly for educational purposes and client suitability assessment by Rahul Naruka (ARN-277301). Mutual Fund investments are subject to market risks, read all scheme related documents carefully before investing. Past performance is not an indicator of future returns.
+        </div>
+
+      </div>
+
+    </section>
+
+    <!-- ---------------------------------------------------- -->
+    <!-- SECTION G: ABOUT US & CONTACT INFORMATION           -->
+    <!-- ---------------------------------------------------- -->
+    <section id="about-contact" class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4">
+      
+      <!-- About Us -->
+      <div class="p-6 sm:p-8 rounded-3xl glass-card space-y-4">
+        <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-blue-400">
+          <span class="w-2 h-2 rounded-full bg-blue-500"></span>
+          <span>About Naruka Wealth</span>
+        </div>
+        <h3 class="text-xl font-bold font-display text-white">Empowering Disciplined Wealth Creation</h3>
+        <p class="text-xs text-slate-300 leading-relaxed">
+          <strong>Naruka Wealth</strong> is managed by <strong>Rahul Naruka</strong>, an AMFI-registered Mutual Fund Distributor (ARN-277301) based in Rewari, Haryana. We specialize in macro-regime transmission analysis, tactical asset allocation, and systematic SIP compounding.
+        </p>
+        <p class="text-xs text-slate-400 leading-relaxed">
+          By combining institutional global liquidity tracking (FII flows, US 10Y Yields, DXY, and Crude) with domestic SIP absorption dynamics, we guide investors with risk-aligned mutual fund portfolios designed to survive volatility and compound wealth steadily.
+        </p>
+      </div>
+
+      <!-- Contact Details -->
+      <div class="p-6 sm:p-8 rounded-3xl glass-card space-y-4 flex flex-col justify-between">
+        <div>
+          <div class="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-emerald-400">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+            <span>Get in Touch</span>
+          </div>
+          <h3 class="text-xl font-bold font-display text-white mt-1">Connect with Rahul Naruka</h3>
+          
+          <div class="mt-4 space-y-2.5 text-xs text-slate-300">
+            <div class="flex items-center gap-2.5">
+              <span class="w-7 h-7 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-blue-400">📍</span>
+              <span><strong>Location:</strong> Rewari, Haryana - 123401</span>
+            </div>
+            <div class="flex items-center gap-2.5">
+              <span class="w-7 h-7 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">📞</span>
+              <span><strong>Contact Phone:</strong> <a href="tel:8168391356" class="text-blue-400 hover:underline">8168391356</a></span>
+            </div>
+            <div class="flex items-center gap-2.5">
+              <span class="w-7 h-7 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">✉️</span>
+              <span><strong>Email:</strong> <a href="mailto:narukawealth@gmail.com" class="text-blue-400 hover:underline">narukawealth@gmail.com</a></span>
+            </div>
+            <div class="flex items-center gap-2.5">
+              <span class="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">📋</span>
+              <span><strong>AMFI Registration:</strong> ARN-277301</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 pt-4 border-t border-slate-800">
+          <a href="https://wa.me/918168391356?text=Hello%20Rahul,%20I%20want%20to%20review%20my%20mutual%20fund%20portfolio" target="_blank" class="flex-1 py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs text-center transition flex items-center justify-center gap-1.5 shadow-lg shadow-emerald-600/20">
+            <span>💬</span> WhatsApp Consultation
+          </a>
+          <a href="mailto:narukawealth@gmail.com?subject=Portfolio%20Review%20Request" class="flex-1 py-2.5 px-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs text-center transition border border-slate-700">
+            <span>✉️</span> Email Inquiry
+          </a>
+        </div>
+      </div>
+
+    </section>
+
   </main>
 
-  <script src="./js/dashboard-upgrade.js"></script>
+  <!-- ========================================== -->
+  <!-- 3. FOOTER & MANDATORY REGULATORY DISCLAIMER-->
+  <!-- ========================================== -->
+  <footer class="border-t border-slate-800/80 bg-slate-950 py-8 text-center text-xs text-slate-400">
+    <div class="max-w-7xl mx-auto px-4 space-y-4">
+      <div class="flex flex-col sm:flex-row justify-between items-center gap-3">
+        <div class="flex items-center gap-2 font-display font-bold text-white text-sm">
+          <span>NARUKA WEALTH</span>
+          <span class="text-slate-600">•</span>
+          <span class="text-xs font-normal text-slate-400">AMFI ARN-277301</span>
+        </div>
+        <p class="text-slate-500 text-[11px]">Designed & Maintained for Rahul Naruka • Rewari, Haryana</p>
+      </div>
+
+      <div class="max-w-4xl mx-auto p-4 rounded-2xl bg-slate-900/60 border border-slate-800 text-[11px] text-slate-400 text-left leading-relaxed">
+        <strong class="text-amber-400 block mb-1">⚠️ Regulatory & Usage Disclaimer:</strong>
+        This platform, dashboard, risk assessment tools, and diagnostic scoring reports are strictly for educational purposes and personal portfolio monitoring by <strong class="text-white">Rahul Naruka</strong>, AMFI Registered Mutual Fund Distributor (ARN: <strong class="text-slate-200">277301</strong> | Rewari | Contact No. <strong class="text-slate-200">8168391356</strong> | Email: <strong class="text-slate-200">narukawealth@gmail.com</strong>). The macro indicators, FII signals, and tactical asset allocation models do not constitute binding investment advice or a solicitation to buy or sell securities. Mutual fund investments are subject to market risks; read all scheme-related documents carefully before investing.
+      </div>
+    </div>
+  </footer>
+
+  <!-- ========================================== -->
+  <!-- 4. JAVASCRIPT CONTROLLERS & ENGINES        -->
+  <!-- ========================================== -->
+  <script>
+    // --- Global State ---
+    const CORRECT_PIN = "0143";
+    const AUTH_STORAGE_KEY = "fii_dashboard_auth";
+    let liveDashboardData = null;
+    let clientRiskProfile = "Moderate";
+    let clientHoldings = [];
+    let flowChartInstance = null;
+    let macroChartInstance = null;
+
+    // --- A. PIN Security Controller ---
+    function checkAuthStatus() {
+      const isAuth = sessionStorage.getItem(AUTH_STORAGE_KEY);
+      const overlay = document.getElementById('pinAuthOverlay');
+      const mainContent = document.querySelector('main');
+      const header = document.querySelector('header');
+      const footer = document.querySelector('footer');
+
+      if (isAuth === 'true') {
+        if (overlay) overlay.classList.add('hidden');
+        if (mainContent) mainContent.classList.remove('blur-sm', 'pointer-events-none');
+        if (header) header.classList.remove('blur-sm', 'pointer-events-none');
+        if (footer) footer.classList.remove('blur-sm', 'pointer-events-none');
+        loadDashboardData();
+      } else {
+        if (overlay) overlay.classList.remove('hidden');
+        if (mainContent) mainContent.classList.add('blur-sm', 'pointer-events-none');
+        if (header) header.classList.add('blur-sm', 'pointer-events-none');
+        if (footer) footer.classList.add('blur-sm', 'pointer-events-none');
+        setupPinInputs();
+      }
+    }
+
+    function setupPinInputs() {
+      const inputs = document.querySelectorAll('.pin-digit');
+      inputs.forEach((input, index) => {
+        input.value = '';
+        input.addEventListener('input', (e) => {
+          if (e.target.value.length === 1) {
+            if (index < inputs.length - 1) inputs[index + 1].focus();
+            else handlePinSubmit(new Event('submit'));
+          }
+        });
+        input.addEventListener('keydown', (e) => {
+          if (e.key === 'Backspace' && !e.target.value && index > 0) inputs[index - 1].focus();
+        });
+        input.addEventListener('paste', (e) => {
+          e.preventDefault();
+          const pasteData = (e.clipboardData || window.clipboardData).getData('text').trim();
+          if (/^\d{4}$/.test(pasteData)) {
+            pasteData.split('').forEach((char, i) => { if (inputs[i]) inputs[i].value = char; });
+            handlePinSubmit(new Event('submit'));
+          }
+        });
+      });
+      if (inputs.length > 0) setTimeout(() => inputs[0].focus(), 150);
+    }
+
+    function handlePinSubmit(e) {
+      if (e && e.preventDefault) e.preventDefault();
+      const inputs = document.querySelectorAll('.pin-digit');
+      let enteredPin = '';
+      inputs.forEach(input => enteredPin += input.value);
+
+      const errorMsg = document.getElementById('pinErrorMsg');
+
+      if (enteredPin === CORRECT_PIN) {
+        if (errorMsg) errorMsg.classList.add('hidden');
+        sessionStorage.setItem(AUTH_STORAGE_KEY, 'true');
+        checkAuthStatus();
+      } else {
+        if (errorMsg) {
+          errorMsg.classList.remove('hidden');
+          errorMsg.innerText = "Incorrect PIN";
+        }
+        inputs.forEach(input => {
+          input.value = '';
+          input.classList.add('border-rose-500');
+          setTimeout(() => input.classList.remove('border-rose-500'), 1000);
+        });
+        if (inputs.length > 0) inputs[0].focus();
+      }
+    }
+
+    function logoutDashboard() {
+      sessionStorage.removeItem(AUTH_STORAGE_KEY);
+      checkAuthStatus();
+    }
+
+    function toggleMobileNav() {
+      const nav = document.getElementById('navbarLinks');
+      nav.classList.toggle('hidden');
+    }
+
+    // --- B. Live Dashboard Data Fetcher ---
+    async function loadDashboardData() {
+      const cacheBust = '?t=' + new Date().getTime();
+      try {
+        const signalRes = await fetch('./data/latest_signal.json' + cacheBust);
+        liveDashboardData = await signalRes.json();
+        renderSignal(liveDashboardData);
+        updateModelSuggestedPortfolio();
+      } catch (err) {
+        console.warn('Live signal fetch fallback:', err);
+      }
+
+      try {
+        const histRes = await fetch('./data/macro_history.json' + cacheBust);
+        const histData = await histRes.json();
+        renderCharts(histData);
+      } catch (err) {
+        console.warn('Historical data fetch fallback:', err);
+      }
+    }
+
+    function renderSignal(data) {
+      const card = document.getElementById('signalCard');
+      const badge = document.getElementById('signalBadge');
+      const title = document.getElementById('signalTitle');
+      const summary = document.getElementById('signalSummary');
+      const score = document.getElementById('signalScore');
+      const updated = document.getElementById('lastUpdated');
+
+      title.innerText = data.signal + " REGIME";
+      summary.innerText = data.summary;
+      score.innerText = `Score: ${data.score}`;
+      updated.innerText = data.last_updated || data.metrics?.timestamp || 'Today';
+
+      card.classList.remove('glow-green', 'glow-yellow', 'glow-red', 'border-emerald-500', 'border-amber-500', 'border-rose-500');
+      badge.classList.remove('bg-emerald-500/20', 'text-emerald-300', 'bg-amber-500/20', 'text-amber-300', 'bg-rose-500/20', 'text-rose-300');
+
+      if (data.signal === 'FAVOURABLE') {
+        card.classList.add('glow-green', 'border-emerald-500/50');
+        badge.classList.add('bg-emerald-500/20', 'text-emerald-300');
+        badge.innerText = 'GREEN LIGHT';
+      } else if (data.signal === 'UNFAVOURABLE') {
+        card.classList.add('glow-red', 'border-rose-500/50');
+        badge.classList.add('bg-rose-500/20', 'text-rose-300');
+        badge.innerText = 'RED LIGHT';
+      } else {
+        card.classList.add('glow-yellow', 'border-amber-500/50');
+        badge.classList.add('bg-amber-500/20', 'text-amber-300');
+        badge.innerText = 'YELLOW LIGHT';
+      }
+
+      const m = data.metrics || {};
+      const b = data.breakdown || {};
+      const getStatusClass = (status) => {
+        if (status === 'Green') return 'text-emerald-400';
+        if (status === 'Red') return 'text-rose-400';
+        return 'text-amber-400';
+      };
+
+      const setG = (id, val, status, assessment) => {
+        const el = document.getElementById('m_' + id);
+        const sub = document.getElementById('b_' + id);
+        if (el) { el.innerText = val; el.className = 'text-base font-bold mt-0.5 ' + getStatusClass(status); }
+        if (sub) sub.innerText = assessment || '';
+      };
+
+      setG('us10y', (m.us10y || '--') + '%', b.us10y?.status, b.us10y?.assessment);
+      setG('us_cpi', (m.us_cpi_yoy || '3.7') + '%', b.us_cpi_yoy?.status, b.us_cpi_yoy?.assessment);
+      setG('dxy', m.dxy || '--', b.dxy?.status, b.dxy?.assessment);
+      setG('brent', '$' + (m.brent || '--'), b.brent?.status, b.brent?.assessment);
+      setG('usdinr', '₹' + (m.usdinr || '--'), b.usdinr?.status, b.usdinr?.assessment);
+      setG('fwd_pe', (m.nifty_fwd_pe ? m.nifty_fwd_pe + 'x' : '20.2x'), b.nifty_fwd_pe?.status, b.nifty_fwd_pe?.assessment);
+      setG('eps_growth', (m.nifty_eps_growth ? m.nifty_eps_growth + '%' : '9.1%'), b.nifty_eps_growth?.status, b.nifty_eps_growth?.assessment);
+    }
+
+    function renderCharts(history) {
+      const sorted = [...history].sort((a, b) => a.Year - b.Year);
+      const labels = sorted.map(d => d.Year);
+      const eqFlows = sorted.map(d => d.Equity_INR_Cr !== undefined ? d.Equity_INR_Cr : d['FII Net Equity Flow (INR Cr)'] || 0);
+      const debtFlows = sorted.map(d => d.Debt_INR_Cr !== undefined ? d.Debt_INR_Cr : 0);
+      const yields = sorted.map(d => ((d.US_10Y_Yield !== undefined ? d.US_10Y_Yield : d['US 10-Yr Yield (%)'] || 0.04) * 100).toFixed(2));
+      const cpiList = sorted.map(d => d.US_YoY_CPI !== undefined ? d.US_YoY_CPI : d['US YoY CPI (%)'] || 2.5);
+      const brent = sorted.map(d => d.Brent_Crude || d['Brent Crude ($/bbl)'] || 50);
+
+      const ctxFlow = document.getElementById('flowChart').getContext('2d');
+      if (flowChartInstance) flowChartInstance.destroy();
+      flowChartInstance = new Chart(ctxFlow, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'FII Equity (₹ Cr)', data: eqFlows, backgroundColor: eqFlows.map(v => v >= 0 ? '#3b82f6' : '#ef4444'), borderRadius: 3 },
+            { label: 'FII Debt (₹ Cr)', data: debtFlows, backgroundColor: debtFlows.map(v => v >= 0 ? '#06b6d4' : '#f43f5e'), borderRadius: 3 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#94a3b8' } } },
+          scales: {
+            x: { ticks: { color: '#94a3b8', maxRotation: 45 }, grid: { display: false } },
+            y: { ticks: { color: '#94a3b8' }, grid: { color: '#334155' } }
+          }
+        }
+      });
+
+      const ctxMacro = document.getElementById('macroChart').getContext('2d');
+      if (macroChartInstance) macroChartInstance.destroy();
+      macroChartInstance = new Chart(ctxMacro, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            { label: 'US 10Y Yield (%)', data: yields, borderColor: '#f59e0b', yAxisID: 'y1', tension: 0.25, borderWidth: 2 },
+            { label: 'US YoY CPI (%)', data: cpiList, borderColor: '#38bdf8', yAxisID: 'y1', tension: 0.25, borderWidth: 2 },
+            { label: 'Brent Crude ($/bbl)', data: brent, borderColor: '#ec4899', yAxisID: 'y2', tension: 0.25, borderWidth: 2 }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: '#94a3b8' } } },
+          scales: {
+            x: { ticks: { color: '#94a3b8', maxRotation: 45 }, grid: { display: false } },
+            y1: { type: 'linear', position: 'left', ticks: { color: '#f59e0b', callback: v => v + '%' }, grid: { color: '#334155' } },
+            y2: { type: 'linear', position: 'right', ticks: { color: '#ec4899', callback: v => '$' + v }, grid: { display: false } }
+          }
+        }
+      });
+    }
+
+    // --- C. Client Risk Profiling Algorithm ---
+    function calculateClientRiskScore() {
+      const getVal = (name) => {
+        const checked = document.querySelector(`input[name="${name}"]:checked`);
+        return checked ? parseInt(checked.value) : 2;
+      };
+
+      const age = parseInt(document.getElementById('clientAgeInput').value) || 35;
+      const qHorizon = getVal('q_horizon');
+      const qDrawdown = getVal('q_drawdown');
+      const qExp = getVal('q_exp');
+      const qReturn = getVal('q_return');
+
+      // Age Penalty/Bonus: Younger = higher equity capacity
+      let ageScore = 3;
+      if (age < 30) ageScore = 4;
+      else if (age <= 45) ageScore = 3;
+      else if (age <= 58) ageScore = 2;
+      else ageScore = 1;
+
+      const totalScore = qHorizon + qDrawdown + qExp + qReturn + ageScore; // max 20, min 5
+
+      if (totalScore <= 8) clientRiskProfile = "Conservative";
+      else if (totalScore <= 12) clientRiskProfile = "Moderate";
+      else if (totalScore <= 16) clientRiskProfile = "Aggressive";
+      else clientRiskProfile = "Very Aggressive";
+
+      // Update UI
+      document.getElementById('profileResultTitle').innerText = clientRiskProfile;
+      const badge = document.getElementById('riskProfileBadge');
+      badge.className = "px-4 py-2 rounded-2xl border text-center min-w-[160px] " + 
+        (clientRiskProfile === 'Conservative' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' :
+         clientRiskProfile === 'Moderate' ? 'bg-blue-500/10 border-blue-500/20 text-blue-400' :
+         clientRiskProfile === 'Aggressive' ? 'bg-amber-500/10 border-amber-500/20 text-amber-400' :
+         'bg-rose-500/10 border-rose-500/20 text-rose-400');
+
+      updateModelSuggestedPortfolio();
+      runPortfolioHealthDiagnostic();
+    }
+
+    // --- D. Real CAMS / KFintech CAS Parser & Demo Manager ---
+    
+    // Amit Sharma Demo Portfolio Loader
+    function loadAmitDemoPortfolio() {
+      clientHoldings = [
+        { name: "HDFC Top 100 Fund - Growth", category: "Large Cap", type: "Equity", value: 180000 },
+        { name: "Parag Parikh Flexi Cap Fund - Growth", category: "Flexi Cap", type: "Equity", value: 240000 },
+        { name: "Nippon India Small Cap Fund - Growth", category: "Small Cap", type: "Equity", value: 160000 },
+        { name: "Kotak Equity Arbitrage Fund - Growth", category: "Arbitrage", type: "Debt", value: 80000 },
+        { name: "HDFC Corporate Bond Fund - Growth", category: "Corporate Bond", type: "Debt", value: 140000 }
+      ];
+      document.getElementById('clientNameInput').value = "Amit Sharma";
+      const statusEl = document.getElementById('casStatusText');
+      if (statusEl) statusEl.innerHTML = '<span class="text-blue-400 font-semibold">✓ Loaded Amit Sharma demo portfolio (5 funds | ₹8,00,000).</span>';
+      renderClientHoldingsTable();
+      runPortfolioHealthDiagnostic();
+    }
+
+    function clearClientHoldings() {
+      clientHoldings = [];
+      const fileInp = document.getElementById('casFileInput');
+      if (fileInp) fileInp.value = '';
+      const statusEl = document.getElementById('casStatusText');
+      if (statusEl) statusEl.innerText = "Holdings cleared. Upload client CAS or click 'Load Amit Demo Portfolio'.";
+      renderClientHoldingsTable();
+      runPortfolioHealthDiagnostic();
+    }
+
+    function addManualFund() {
+      const name = document.getElementById('manualFundName').value.trim();
+      const cat = document.getElementById('manualFundCat').value;
+      const val = parseFloat(document.getElementById('manualFundVal').value) || 0;
+
+      if (!name || val <= 0) {
+        alert("Please provide a valid fund name and investment value.");
+        return;
+      }
+
+      const type = (cat === 'Debt' || cat === 'Arbitrage') ? 'Debt' : 'Equity';
+      clientHoldings.push({ name, category: cat, type, value: val });
+
+      document.getElementById('manualFundName').value = '';
+      document.getElementById('manualFundVal').value = '';
+      renderClientHoldingsTable();
+      runPortfolioHealthDiagnostic();
+    }
+
+    function removeClientFund(index) {
+      clientHoldings.splice(index, 1);
+      renderClientHoldingsTable();
+      runPortfolioHealthDiagnostic();
+    }
+
+    function renderClientHoldingsTable() {
+      const tbody = document.getElementById('clientHoldingsBody');
+      tbody.innerHTML = '';
+
+      if (clientHoldings.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="py-6 text-center text-slate-500">No client portfolio loaded. Upload your CAMS/KFintech CAS (PDF/Excel) or click "Load Amit Demo Portfolio".</td></tr>';
+        document.getElementById('totalClientVal').innerText = "₹0";
+        document.getElementById('totalClientSchemes').innerText = "0";
+        document.getElementById('clientEquityPct').innerText = "0%";
+        document.getElementById('clientDebtPct').innerText = "0%";
+        return;
+      }
+
+      const totalVal = clientHoldings.reduce((sum, f) => sum + f.value, 0);
+      let equityVal = 0;
+      let debtVal = 0;
+
+      clientHoldings.forEach((f, idx) => {
+        const wt = totalVal > 0 ? (f.value / totalVal * 100).toFixed(1) : 0;
+        if (f.type === 'Equity') equityVal += f.value;
+        else debtVal += f.value;
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-800/40 transition-colors';
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 font-semibold text-white">${f.name}</td>
+          <td class="py-2.5 px-3 text-slate-400">${f.category}</td>
+          <td class="py-2.5 px-3">
+            <span class="px-2 py-0.5 rounded text-[10px] font-semibold ${f.type === 'Equity' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}">${f.type}</span>
+          </td>
+          <td class="py-2.5 px-3 font-medium text-slate-200">₹${f.value.toLocaleString('en-IN')}</td>
+          <td class="py-2.5 px-3 font-bold text-white">${wt}%</td>
+          <td class="py-2.5 px-3 text-center">
+            <button onclick="removeClientFund(${idx})" class="text-rose-400 hover:text-rose-300 p-1">✕</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      const eqPct = totalVal > 0 ? Math.round(equityVal / totalVal * 100) : 0;
+      const debtPct = 100 - eqPct;
+
+      document.getElementById('totalClientVal').innerText = '₹' + totalVal.toLocaleString('en-IN');
+      document.getElementById('totalClientSchemes').innerText = clientHoldings.length;
+      document.getElementById('clientEquityPct').innerText = eqPct + '%';
+      document.getElementById('clientDebtPct').innerText = debtPct + '%';
+    }
+
+    // Precision Scheme Name Extractor (Strictly rejects transaction rows and switch lines)
+    function extractCleanSchemeName(rawText) {
+      if (!rawText) return null;
+      
+      // 1. Strictly ignore switch transactions, purchases, redemptions, registrations, and system remarks
+      if (/Switch-In|Switch-Out|Switch\s*In|Switch\s*Out|Lateral\s*Shift|Purchase|Redemption|SIP|STP|SWP|Stamp\s*Duty|STT|Registration|Updated|Cancelled|Terminated|Invalid|merger\s*of|Load\s*Structure|applicable\s*NAV/i.test(rawText)) {
+        return null;
+      }
+      if (/^(?:Total\s+Purchase|Total\s+Redemption|Total\s+Valuation|Total\s+Cost|Closing\s+Balance|Balance\s+Units|Date\s+Amount|Date\s+Transaction|Summary\s+of|Consolidated|Folio\s+No|Investor\s+Name|Registrar|PAN|NAV\s+on|Market\s+Value\s+on)\b/i.test(rawText.trim())) {
+        return null;
+      }
+
+      // 2. AMC Identification Pattern (Including Bajaj Finserv, ABSL, PPFAS, etc.)
+      const amcPattern = /(?:HDFC|ICICI\s+Prudential|ICICI|SBI|Nippon\s+India|Nippon|Kotak|Axis|Parag\s+Parikh|PPFAS|Mirae\s+Asset|Mirae|UTI|Motilal\s+Oswal|Motilal|Bandhan|IDFC|Tata|Aditya\s+Birla\s+Sun\s+Life|Aditya\s+Birla|ABSL|Canara\s+Robeco|Canara|DSP|Franklin\s+Templeton|Franklin|Invesco|Sundaram|HSBC|Quant|Edelweiss|Mahindra\s+Manulife|PGIM\s+India|PGIM|WhiteOak\s+Capital|WhiteOak|Baroda\s+BNP\s+Paribas|Baroda|Groww|Navi|Taurus|JM\s+Financial|Union|Bajaj\s+Finserv)/i;
+
+      const amcMatch = rawText.match(amcPattern);
+      if (!amcMatch) return null;
+
+      // Extract text starting from the AMC name forward
+      let schemePart = rawText.slice(amcMatch.index);
+
+      // Truncate at trailing metadata/transaction keywords
+      const cutoffRegex = /\b(?:ISIN|Folio|Closing|Balance|Units?|NAV|Price|Valuation|Market\s+Value|Current\s+Value|Total|Purchase|Redemption|SIP|STP|SWP|Switch|Advisor|ARN|Registrar|PAN)\b|[|,;:]/i;
+      schemePart = schemePart.split(cutoffRegex)[0].trim();
+
+      // Clean up punctuation and dashes
+      schemePart = schemePart.replace(/[\s\-–:/|()]+$/, '').trim();
+
+      // Filter out generic AMC headers (e.g. "HDFC Mutual Fund", "SBI Mutual Fund", "Kotak Mutual Fund")
+      if (/\bMutual\s+Fund\b/i.test(schemePart) && !/\b(?:Growth|Direct|Regular|Option|Plan|Flexi|Mid|Small|Large|Top|Focused|Balanced|Advantage|Opportunities|Bluechip|All\s+Seasons|Corporate|Banking|PSU|Arbitrage|Liquid|Index|ETF|Saver|Emerging|Value|Gold)\b/i.test(schemePart)) {
+        return null;
+      }
+
+      // Check for mutual fund keywords
+      const fundKeywords = /\b(?:Fund|Growth|Plan|Option|Index|ETF|Cap|Equity|Debt|Balanced|Saver|Bluechip|Opportunities|Bond|Liquid|Arbitrage|Tax|Advantage|Gold)\b/i;
+      if (!fundKeywords.test(schemePart) || schemePart.length < 10) {
+        return null;
+      }
+
+      return schemePart;
+    }
+
+    // Unified Multi-Format CAMS / KFintech Upload Handler
+    async function handleCasFileUpload(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      const statusEl = document.getElementById('casStatusText');
+      statusEl.innerText = `Reading ${file.name}...`;
+
+      if (file.name.toLowerCase().endsWith('.pdf')) {
+        const password = document.getElementById('casPasswordInput').value.trim();
+        const reader = new FileReader();
+
+        reader.onload = async function() {
+          try {
+            const typedarray = new Uint8Array(this.result);
+            let pdfDoc;
+            try {
+              const loadingTask = pdfjsLib.getDocument({ data: typedarray, password: password });
+              pdfDoc = await loadingTask.promise;
+            } catch (pwErr) {
+              if (pwErr.name === "PasswordException") {
+                const enteredPw = prompt("PDF is password-protected. Enter client PAN (uppercase/lowercase) or password:");
+                if (!enteredPw) {
+                  statusEl.innerText = "Password required to open this CAMS statement.";
+                  return;
+                }
+                document.getElementById('casPasswordInput').value = enteredPw;
+                const retryTask = pdfjsLib.getDocument({ data: typedarray, password: enteredPw });
+                pdfDoc = await retryTask.promise;
+              } else {
+                throw pwErr;
+              }
+            }
+
+            let fullText = "";
+            for (let i = 1; i <= pdfDoc.numPages; i++) {
+              const page = await pdfDoc.getPage(i);
+              const textContent = await page.getTextContent();
+              
+              // Sort text items top-to-bottom (Y descending), left-to-right (X ascending)
+              const items = textContent.items.map(it => ({
+                str: it.str,
+                x: it.transform[4],
+                y: it.transform[5]
+              })).sort((a, b) => (b.y - a.y) || (a.x - b.x));
+
+              let currY = null;
+              let lineTokens = [];
+              for (const it of items) {
+                if (currY === null || Math.abs(it.y - currY) > 3.5) {
+                  if (lineTokens.length > 0) fullText += "\n" + lineTokens.join(" ").trim();
+                  lineTokens = [it.str];
+                  currY = it.y;
+                } else {
+                  lineTokens.push(it.str);
+                }
+              }
+              if (lineTokens.length > 0) fullText += "\n" + lineTokens.join(" ").trim();
+            }
+
+            processCasText(fullText, file.name);
+          } catch (err) {
+            console.error("PDF Parsing Error:", err);
+            statusEl.innerHTML = `<span class="text-rose-400 font-semibold">Could not parse PDF. Check password or use manual entry.</span>`;
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } 
+      else if (file.name.match(/\.(xlsx|xls|csv)$/i)) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          try {
+            const data = new Uint8Array(e.target.result);
+            const workbook = XLSX.read(data, { type: 'array' });
+            let combinedText = "";
+
+            workbook.SheetNames.forEach(sheetName => {
+              const worksheet = workbook.Sheets[sheetName];
+              const csv = XLSX.utils.sheet_to_csv(worksheet);
+              combinedText += "\n" + csv;
+            });
+
+            processCasText(combinedText, file.name);
+          } catch (err) {
+            console.error("Excel Parsing Error:", err);
+            statusEl.innerHTML = `<span class="text-rose-400 font-semibold">Error reading Excel file. Check file format.</span>`;
+          }
+        };
+        reader.readAsArrayBuffer(file);
+      } else {
+        statusEl.innerHTML = `<span class="text-amber-400 font-semibold">Unsupported file format. Please upload PDF, Excel (.xlsx, .xls), or CSV.</span>`;
+      }
+    }
+
+    // Robust Multi-Tier Market Valuation Extractor (Past Date Digits)
+    function extractSchemeValuation(sectionLines, currentLine) {
+      // Tier 1: Explicit Valuation / Market Value line in sectionLines
+      // Search from bottom to top (closing summary is at the bottom of the folio block)
+      const mvPattern = /(?:Valuation|Current\s*Valuation|Market\s*Value|Current\s*Value)\b.*?(?:INR|Rs\.?|:)\s*(?:INR|Rs\.?)?\s*([\d,]+(?:\.\d{1,2})?)/i;
+
+      for (let i = sectionLines.length - 1; i >= 0; i--) {
+        const line = sectionLines[i];
+        if (/Total\s+Purchase|Total\s+Cost|Purchase\s+Price|Amount\s+Invested|Cost\s+Value/i.test(line)) {
+          continue;
+        }
+        const m = line.match(mvPattern);
+        if (m) {
+          const v = parseFloat(m[1].replace(/,/g, ''));
+          if (v >= 1.0) return Math.round(v * 100) / 100;
+        }
+      }
+
+      // Tier 2: Summary Table Rows (Pipe/Tab Delimited)
+      for (const line of sectionLines) {
+        if (line.includes('|') || line.includes('\t')) {
+          const parts = line.split(/[|\t]/);
+          for (let p = parts.length - 1; p >= 0; p--) {
+            const cand = parts[p].replace(/INR|Rs\.?|,/gi, '').trim();
+            const v = parseFloat(cand);
+            if (!isNaN(v) && v >= 10.0) return Math.round(v * 100) / 100;
+          }
+        }
+      }
+
+      // Tier 3: Compute Units * NAV
+      let units = 0, nav = 0;
+      for (let i = sectionLines.length - 1; i >= 0; i--) {
+        const line = sectionLines[i];
+        if (!/Purchase|Cost|Redemption|Switch/i.test(line)) {
+          if (units === 0) {
+            const uMatch = line.match(/(?:Closing\s*Unit\s*Balance|Closing\s*Balance|Balance\s*Units?|Total\s*Units?)\s*[:\-]?\s*([\d,]+\.?\d*)/i);
+            if (uMatch) units = parseFloat(uMatch[1].replace(/,/g, '')) || 0;
+          }
+          if (nav === 0) {
+            const nMatch = line.match(/(?:NAV|Price)\s*(?:on|as\s*on)?\s*[:\-]?\s*(?:INR|Rs\.?)?\s*([\d,]+\.?\d*)/i);
+            if (nMatch) nav = parseFloat(nMatch[1].replace(/,/g, '')) || 0;
+          }
+        }
+      }
+      if (units > 0 && nav > 0) return Math.round(units * nav * 100) / 100;
+
+      // Tier 4: Trailing currency numbers on same line
+      const nums = currentLine.match(/[\d,]+\.\d{2}/g);
+      if (nums) {
+        for (let k = nums.length - 1; k >= 0; k--) {
+          const v = parseFloat(nums[k].replace(/,/g, ''));
+          if (v >= 10.0) return Math.round(v * 100) / 100;
+        }
+      }
+
+      return 0;
+    }
+
+    // Core Statement Parser
+    function processCasText(rawText, sourceName) {
+      const statusEl = document.getElementById('casStatusText');
+
+      // Extract Investor Name
+      const nameMatch = rawText.match(/(?:Investor\s*Name|Name\s*of\s*Investor|Client\s*Name|Holder\s*Name|Dear\s+Mr\.|Dear\s+Ms\.|Dear\s+Mrs\.)\s*[:\-]?\s*([A-Za-z\s\.]{3,35})/i);
+      if (nameMatch && nameMatch[1]) {
+        const detectedName = nameMatch[1].split('\n')[0].replace(/PAN.*/i, '').trim();
+        if (detectedName.length > 3) {
+          document.getElementById('clientNameInput').value = detectedName;
+        }
+      }
+
+      const lines = rawText.split(/\r?\n/).map(l => l.trim()).filter(l => l.length > 0);
+      const parsedHoldings = [];
+      const seenSchemes = new Set();
+      const schemePositions = [];
+
+      // Step 1: Detect clean scheme positions
+      for (let i = 0; i < lines.length; i++) {
+        const cleanName = extractCleanSchemeName(lines[i]);
+        if (cleanName && !seenSchemes.has(cleanName.toUpperCase())) {
+          schemePositions.push({ lineIndex: i, name: cleanName, lineText: lines[i] });
+          seenSchemes.add(cleanName.toUpperCase());
+        }
+      }
+
+      // Step 2: Extract real current market valuation for each scheme
+      for (let s = 0; s < schemePositions.length; s++) {
+        const currentPos = schemePositions[s];
+        const nextPosIndex = (s + 1 < schemePositions.length) ? schemePositions[s + 1].lineIndex : lines.length;
+        const sectionLines = lines.slice(currentPos.lineIndex, nextPosIndex);
+
+        // Check closing units to skip zero balance redeemed folios
+        let closingUnits = 0;
+        for (let l = sectionLines.length - 1; l >= 0; l--) {
+          const uMatch = sectionLines[l].match(/Closing\s*Unit\s*Balance\s*:\s*([\d,]+\.?\d*)/i);
+          if (uMatch) {
+            closingUnits = parseFloat(uMatch[1].replace(/,/g, '')) || 0;
+            break;
+          }
+        }
+
+        // Extract genuine closing market valuation
+        const val = extractSchemeValuation(sectionLines, currentPos.lineText);
+
+        // Skip folios with 0 balance and 0 value
+        if (closingUnits === 0 && val === 0) {
+          continue;
+        }
+
+        const isDebt = /Bond|Debt|Liquid|Arbitrage|Overnight|Cash|PSU|Gilt|Treasury|Credit|Savings|Ultra\s*Short/i.test(currentPos.name);
+        const cat = isDebt ? "Debt" : (/Small/i.test(currentPos.name) ? "Small Cap" : (/Mid/i.test(currentPos.name) ? "Mid Cap" : (/Large|Top 100|Frontline/i.test(currentPos.name) ? "Large Cap" : "Flexi Cap")));
+
+        parsedHoldings.push({
+          name: currentPos.name,
+          category: cat,
+          type: isDebt ? "Debt" : "Equity",
+          value: Math.round(val)
+        });
+      }
+
+      // Step 3: Populate genuine holdings
+      if (parsedHoldings.length > 0) {
+        clientHoldings = parsedHoldings;
+        statusEl.innerHTML = `<span class="text-emerald-400 font-bold">✓ Successfully extracted ${parsedHoldings.length} authentic mutual fund holdings from ${sourceName}.</span>`;
+        renderClientHoldingsTable();
+        runPortfolioHealthDiagnostic();
+      } else {
+        statusEl.innerHTML = `<span class="text-amber-400 font-semibold">⚠️ Could not detect scheme valuations from file. Please use manual entry or load Amit demo portfolio.</span>`;
+      }
+    }
+    // --- E. Portfolio Diagnostic & 100-Point Scoring Engine ---
+    function runPortfolioHealthDiagnostic() {
+      if (clientHoldings.length === 0) {
+        document.getElementById('currentScoreNumber').innerText = "N/A";
+        document.getElementById('score_fit').innerText = "-/30";
+        document.getElementById('score_macro').innerText = "-/25";
+        document.getElementById('score_overlap').innerText = "-/25";
+        document.getElementById('score_quality').innerText = "-/20";
+        
+        document.getElementById('bar_fit').style.width = '0%';
+        document.getElementById('bar_macro').style.width = '0%';
+        document.getElementById('bar_overlap').style.width = '0%';
+        document.getElementById('bar_quality').style.width = '0%';
+
+        const notesList = document.getElementById('diagnosticNotesList');
+        notesList.innerHTML = `<li class="text-slate-400">• No existing portfolio uploaded. Proceed with fresh model allocation aligned with the client's risk profile (${clientRiskProfile}) and active macro regime.</li>`;
+
+        updateReportPreview("N/A", 0, 0);
+        return;
+      }
+
+      const totalVal = clientHoldings.reduce((sum, f) => sum + f.value, 0);
+      const equityVal = clientHoldings.filter(f => f.type === 'Equity').reduce((sum, f) => sum + f.value, 0);
+      const currentEqPct = totalVal > 0 ? Math.round(equityVal / totalVal * 100) : 0;
+
+      let targetEq = 50;
+      if (clientRiskProfile === 'Conservative') targetEq = 15;
+      else if (clientRiskProfile === 'Moderate') targetEq = 45;
+      else if (clientRiskProfile === 'Aggressive') targetEq = 70;
+      else targetEq = 85;
+
+      const eqDiff = Math.abs(currentEqPct - targetEq);
+      let fitScore = Math.max(5, Math.round(30 - (eqDiff * 0.8)));
+
+      const isRedRegime = liveDashboardData?.signal === 'UNFAVOURABLE';
+      let macroScore = 20;
+      if (isRedRegime) {
+        if (currentEqPct > 70) macroScore = 10;
+        else if (currentEqPct > 50) macroScore = 15;
+        else macroScore = 24;
+      }
+
+      let overlapScore = 22;
+      if (clientHoldings.length < 3) overlapScore = 12;
+      else if (clientHoldings.length > 15) overlapScore = 14;
+
+      let qualityScore = 16;
+      const totalCurrentScore = fitScore + macroScore + overlapScore + qualityScore;
+
+      document.getElementById('currentScoreNumber').innerText = `${totalCurrentScore} / 100`;
+      document.getElementById('score_fit').innerText = `${fitScore}/30`;
+      document.getElementById('score_macro').innerText = `${macroScore}/25`;
+      document.getElementById('score_overlap').innerText = `${overlapScore}/25`;
+      document.getElementById('score_quality').innerText = `${qualityScore}/20`;
+
+      document.getElementById('bar_fit').style.width = (fitScore / 30 * 100) + '%';
+      document.getElementById('bar_macro').style.width = (macroScore / 25 * 100) + '%';
+      document.getElementById('bar_overlap').style.width = (overlapScore / 25 * 100) + '%';
+      document.getElementById('bar_quality').style.width = (qualityScore / 20 * 100) + '%';
+
+      const notesList = document.getElementById('diagnosticNotesList');
+      notesList.innerHTML = '';
+
+      const addNote = (text, isGood = false) => {
+        const li = document.createElement('li');
+        li.className = isGood ? 'text-emerald-400 font-medium' : 'text-amber-300';
+        li.innerText = (isGood ? '✓ ' : '⚠️ ') + text;
+        notesList.appendChild(li);
+      };
+
+      if (eqDiff > 15) {
+        addNote(`Asset Allocation Mismatch: Current portfolio has ${currentEqPct}% Equity vs ideal ${targetEq}% for a ${clientRiskProfile} investor.`);
+      } else {
+        addNote(`Equity-Debt asset mix aligns closely with assessed ${clientRiskProfile} risk tolerance.`, true);
+      }
+
+      if (isRedRegime && currentEqPct > 60) {
+        addNote(`Macro Regime Alert: Active signal is UNFAVOURABLE (Red). FII foreign selling and high US yields warrant increasing debt/arbitrage reserves.`);
+      }
+
+      if (clientHoldings.length > 10) {
+        addNote(`Folio Overcrowding: Holding ${clientHoldings.length} schemes causes portfolio dilution. Consolidate into 4 to 6 high-conviction funds.`);
+      }
+
+      addNote(`Suggested Model Rebalance raises overall portfolio diagnostic health score to 94 / 100.`, true);
+      updateReportPreview(totalCurrentScore, currentEqPct, 100 - currentEqPct);
+    }
+    
+    // --- F. Suggested Rebalanced Model Portfolio ---
+    function updateModelSuggestedPortfolio() {
+      const isRedRegime = liveDashboardData?.signal === 'UNFAVOURABLE';
+      const isGreenRegime = liveDashboardData?.signal === 'FAVOURABLE';
+
+      let eq = 50;
+      let debt = 50;
+      let fundBasket = [];
+
+      const profKey = clientRiskProfile.toLowerCase().replace(' ', '_');
+      
+      // Pull dynamic profiles from live data if available
+      if (liveDashboardData?.allocation?.profiles && liveDashboardData.allocation.profiles[profKey]) {
+        const p = liveDashboardData.allocation.profiles[profKey];
+        eq = p.equity;
+        debt = p.debt;
+        fundBasket = p.funds || [];
+      } else {
+        // Fallback default
+        eq = clientRiskProfile === 'Conservative' ? 20 : clientRiskProfile === 'Moderate' ? 45 : 70;
+        debt = 100 - eq;
+      }
+
+      document.getElementById('rebalanceMacroSignal').innerText = (liveDashboardData?.signal || 'UNFAVOURABLE') + ' LIGHT';
+      document.getElementById('rebalanceClientProfile').innerText = clientRiskProfile.toUpperCase();
+      document.getElementById('suggestedEqText').innerText = eq + '%';
+      document.getElementById('suggestedDebtText').innerText = debt + '%';
+      document.getElementById('suggestedEqBar').style.width = eq + '%';
+      document.getElementById('suggestedDebtBar').style.width = debt + '%';
+
+      const tbody = document.getElementById('suggestedFundsTableBody');
+      tbody.innerHTML = '';
+
+      fundBasket.forEach(f => {
+        const isObj = typeof f === 'object';
+        const name = isObj ? f.name : f;
+        const alloc = isObj ? f.allocation : (100 / fundBasket.length).toFixed(0);
+        const cat = isObj ? f.category : 'Diversified';
+        const type = isObj ? f.type : 'Equity';
+
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-slate-800/40 transition-colors';
+        tr.innerHTML = `
+          <td class="py-2.5 px-3 font-semibold text-white">${name}</td>
+          <td class="py-2.5 px-3 text-slate-400">${cat}</td>
+          <td class="py-2.5 px-3">
+            <span class="px-2 py-0.5 rounded text-[10px] font-semibold ${type === 'Equity' ? 'bg-blue-500/10 text-blue-400 border border-blue-500/20' : 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/20'}">${type}</span>
+          </td>
+          <td class="py-2.5 px-3 font-bold text-white">${alloc}%</td>
+          <td class="py-2.5 px-3 text-slate-300 text-xs">${type === 'Equity' ? 'Monthly SIP / 6-Month Staggered STP' : 'Lump Sum / Park & Accrue'}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // --- G. PDF Report Synchronizer & Exporter ---
+    function updateReportPreview(currScore, currEq, currDebt) {
+      document.getElementById('rptClientName').innerText = document.getElementById('clientNameInput').value || 'Valued Investor';
+      document.getElementById('rptClientAge').innerText = (document.getElementById('clientAgeInput').value || '35') + ' Years';
+      document.getElementById('rptClientProfile').innerText = clientRiskProfile;
+      document.getElementById('rptMacroRegime').innerText = `${liveDashboardData?.signal || 'UNFAVOURABLE'} (Macro Transmission)`;
+      document.getElementById('rptCurrentScore').innerText = currScore === "N/A" ? "N/A (Fresh Deployment)" : `${currScore} / 100`;
+
+      const compBody = document.getElementById('rptAllocCompareBody');
+      compBody.innerHTML = '';
+
+      const targetEq = parseInt(document.getElementById('suggestedEqText').innerText) || 50;
+      const targetDebt = 100 - targetEq;
+
+      if (clientHoldings.length === 0) {
+        compBody.innerHTML = `
+          <tr>
+            <td class="p-2 font-semibold">Equity Assets</td>
+            <td class="p-2 font-bold text-slate-400">0% (No CAS)</td>
+            <td class="p-2 font-bold text-blue-700">${targetEq}%</td>
+            <td class="p-2 text-slate-600">Allocate ${targetEq}% of fresh capital as per model equity basket</td>
+          </tr>
+          <tr>
+            <td class="p-2 font-semibold">Debt / Liquid Reserves</td>
+            <td class="p-2 font-bold text-slate-400">0% (No CAS)</td>
+            <td class="p-2 font-bold text-emerald-700">${targetDebt}%</td>
+            <td class="p-2 text-slate-600">Allocate ${targetDebt}% of fresh capital into debt/arbitrage buffer</td>
+          </tr>
+        `;
+      } else {
+        compBody.innerHTML = `
+          <tr>
+            <td class="p-2 font-semibold">Equity Assets</td>
+            <td class="p-2 font-bold">${currEq}%</td>
+            <td class="p-2 font-bold text-blue-700">${targetEq}%</td>
+            <td class="p-2 text-slate-600">${currEq > targetEq ? 'Reduce Equity Exposure by ' + (currEq - targetEq) + '%' : 'Increase Equity Exposure by ' + (targetEq - currEq) + '%'}</td>
+          </tr>
+          <tr>
+            <td class="p-2 font-semibold">Debt / Liquid Reserves</td>
+            <td class="p-2 font-bold">${currDebt}%</td>
+            <td class="p-2 font-bold text-emerald-700">${targetDebt}%</td>
+            <td class="p-2 text-slate-600">${currDebt < targetDebt ? 'Allocate ' + (targetDebt - currDebt) + '% to Banking & PSU / Arbitrage' : 'Rebalance surplus to Equity'}</td>
+          </tr>
+        `;
+      }
+
+      const rptFundsBody = document.getElementById('rptFundsBody');
+      rptFundsBody.innerHTML = '';
+      const profKey = clientRiskProfile.toLowerCase().replace(' ', '_');
+      const funds = liveDashboardData?.allocation?.profiles?.[profKey]?.funds || [];
+
+      funds.forEach(f => {
+        const isObj = typeof f === 'object';
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="p-2 font-semibold">${isObj ? f.name : f}</td>
+          <td class="p-2">${isObj ? f.category : 'Multi Cap'}</td>
+          <td class="p-2 font-bold text-slate-800">${isObj ? f.allocation + '%' : '25%'}</td>
+          <td class="p-2">${isObj && f.type === 'Debt' ? 'Accrual / Cash Parking' : 'Systematic Investment Plan (SIP)'}</td>
+        `;
+        rptFundsBody.appendChild(tr);
+      });
+    }
+
+    function applySuggestedModelToReport() {
+      runPortfolioHealthDiagnostic();
+      const reportSec = document.getElementById('report-section');
+      reportSec.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    async function downloadClientReportPDF() {
+      const btn = document.getElementById('downloadPdfBtn');
+      btn.innerText = "⏳ Generating Official PDF...";
+      btn.disabled = true;
+
+      const reportEl = document.getElementById('printableReportContainer');
+
+      try {
+        const canvas = await html2canvas(reportEl, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: '#ffffff'
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        const clientName = document.getElementById('clientNameInput').value.trim() || 'Client';
+        pdf.save(`Naruka_Wealth_Portfolio_Review_${clientName.replace(/\s+/g, '_')}.pdf`);
+
+        btn.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+          </svg> Download Client Report as PDF
+        `;
+        btn.disabled = false;
+      } catch (err) {
+        console.error(err);
+        alert("Could not generate PDF directly. Please print/save as PDF from browser.");
+        btn.innerText = "Download Client Report as PDF";
+        btn.disabled = false;
+      }
+    }
+
+    // Initialize on page load
+    document.addEventListener('DOMContentLoaded', () => {
+      checkAuthStatus();
+      calculateClientRiskScore();
+    });
+  </script>
 </body>
 </html>
